@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Matcha Heaven Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6b8f24",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#1b1f13",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-effect {
+            background: rgba(27, 31, 19, 0.7);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display min-h-screen">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 glass-effect border-b border-black/5 dark:border-white/5">
+<div class="px-4 pt-4 pb-2">
+<div class="flex items-center justify-between mb-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm">
+<span class="material-icons-round text-slate-700 dark:text-slate-200">chevron_left</span>
+</button>
+<div class="bg-primary/10 dark:bg-primary/20 px-4 py-1.5 rounded-full border border-primary/20">
+<span class="text-xs font-bold tracking-wider text-primary uppercase">Table T-01</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm">
+<span class="material-icons-round text-slate-700 dark:text-slate-200">more_horiz</span>
+</button>
+</div>
+<div class="relative mb-2">
+<span class="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-white dark:bg-zinc-800 border-none rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary shadow-sm dark:placeholder-slate-500" placeholder="Search your matcha cravings..." type="text"/>
+</div>
+</div>
+<!-- Category Tabs -->
+<nav class="flex overflow-x-auto hide-scrollbar px-4 py-3 gap-2">
+<button class="whitespace-nowrap px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-md shadow-primary/20">
+                Matcha Specials
+            </button>
+<button class="whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-100 dark:border-zinc-700">
+                Hot Teas
+            </button>
+<button class="whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-100 dark:border-zinc-700">
+                Iced Teas
+            </button>
+<button class="whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-zinc-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-100 dark:border-zinc-700">
+                Pastries
+            </button>
+</nav>
+</header>
+<main class="p-4 pb-24">
+<!-- Section Title -->
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold tracking-tight">Matcha Specials</h2>
+<span class="text-xs text-slate-400 font-medium">12 Items Found</span>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Product Card 1 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="Iced Matcha Latte" class="w-full h-full object-cover" data-alt="Premium iced matcha latte with visible layers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmPJFiN1tJ4MlEwKKTb0B67gWEne-MhZ9-JyNCq55uW1aQl7sRWh5JI_MBCNpoUqrhQZgsOMyk7f6h2dobcWU60RsG8gXAmIGjrFB_yc-vi3yIWOAjz26jlohARvyqey8BSGx8dGT4Zfd5-yiV6j9ggtU8NhkubHFr6ZRKHw7D4WJ7elpUyFveD8vsOkqHVitNVHz8k4gWapYKRpTBzxwXR6sQyeGyOWExwHhfPeJGJVU6ad1ckVUQ3k0Xf0S_T_t8okxQiimN8vI"/>
+<div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
+<span class="material-icons-round text-rose-500 text-base">favorite_border</span>
+</div>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">Iced Matcha Latte</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$6.50</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="Ceremonial Hot Matcha" class="w-full h-full object-cover" data-alt="Traditional whisked ceremonial hot matcha in a bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb1-fQU1dWOiO1eQLBXIDm7ag3Zv_vyI0ZUO4deNL60vCOTbdl6JDRMkkxotBtJmFtlf8XoSDR3pZyzQxLHG4sL56rBwN7g9CEAGzyIav_RiKfol1hOwIMdpDuO1VJCta0nN8VLldMAqf39Et-iBOYz4bHb0dvRCtV_U_uWnoGXfv6P564L1W0jQG6qjVAXazqXfB9_IBY0Sj4p3HR7oQZKWceb-pQD3Ii8dP9t1vOxgodHXRfqoN3V7anXcYsGvIBtqtC_go7SIc"/>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">Ceremonial Grade Hot Matcha</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$5.00</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="Matcha Glazed Donut" class="w-full h-full object-cover" data-alt="Matcha glazed donut with green drizzle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSLC9zVEE-BzlSv9RgBPiTDlgWV9rLW6LC-zZ8Sx6mtasa_Hzdz9dR40PB8hMTp5xrBr6U-JsLfc4hUTd6dS2SvqECMkBmwFJLs9zgJTFrggUJXMGyd-9hhGY9O8iVUGa7KJTZoaoY04HSGX5O97ZsuNj74bIhXo8lUg8tO79l_JxwcBWAVZcYGOGQ89pIJVRHb1WZ5N_vwaGFwo7OUYrkIcLCFIAs4M8yCZVxipl6urkO3o6Xpypzql4qpsLLRnVUCuqfEK70eA0"/>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">Matcha Glazed Donut</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$4.25</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="Strawberry Matcha Fusion" class="w-full h-full object-cover" data-alt="Layered strawberry and matcha fusion drink" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn5HD3qmH9U0nyXftv3B-HlFr9PrhMGSAJ9ziCfiqxhcF345-upyEvlFKgfKrTaoKfiqIwmzkABbagr9FfyK19A1LyHavP-N6aUCFPX0e6lVWaEfKxjppBji_bpxZNJJGZtAi3GIQvBunDPP-_vI1bp4B5ZD36DjlJlMVZKzonHzWdwDCycoPOaeOBxnkOgowPrMsBRX753CSPDIg8rlLsZw7Ob7vbKgTJKSgPMfYa4LTee3pPcIHLOPIQDYjkYfa5Ph00kwvbTfA"/>
+<div class="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight">New</div>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">Strawberry Matcha Fusion</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$7.00</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 5 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="Matcha Mochi Cake" class="w-full h-full object-cover" data-alt="Slice of green matcha mochi cake" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA2S0QdKn2i62levhDyVc73pXbbcTcT4k2lcvow0gQ4HoESJYXrtNsFPqxtElYhILCcg-YquJXUvjgpxkPX-qx9bdnXBwHsCaZ9asbQeOzYmEggd4ui2drRkLNnm6NgfBG1ndmIhEsjk7iaqMApITilcLZYdYnbRy1ScZ6DCzGJFulWJIyegYBlKu24eziuaEzlyhas3IwCS0hHlKSFufNDIm4aww3hbu3OG480hfhID3I0TyBzXXJg-s0dWJ48BwCXI0eWvQZgHY"/>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">Matcha Mochi Cake</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$5.50</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 6 -->
+<div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+<div class="relative aspect-square overflow-hidden bg-slate-100">
+<img alt="White Choc Matcha" class="w-full h-full object-cover" data-alt="Hot white chocolate and matcha drink" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtFTMcBNlgj7dSu6fq3BezrfQbnshBFpQ47UyZtak-AenoWGqv1RExDC6ob8s5NeoUynFFub9yi9wr8PjrCBahvb8J8wwnKkolmBFvfJ-PJIKso2LM5xTLQnK0tjODee79N-NAcYdpjmKdYjNR-fEx5mT1Z_pwjJmWPTmIjRv-LHY7NthId-pt32OzXnEI-MaQFCWQVDLiaWW8rCveG4Ewl4J_pAJ4CrOigSEqnLmWkAyLBmFIG-R5HNHUa5kBB-Kh9w6adwO61i0"/>
+</div>
+<div class="p-3 flex flex-col flex-grow">
+<h3 class="font-semibold text-sm line-clamp-2 mb-1 leading-snug">White Choc Matcha</h3>
+<div class="mt-auto flex items-center justify-between pt-2">
+<span class="text-primary font-bold">$6.25</span>
+<button class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-icons-round text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation / Cart FAB -->
+<div class="fixed bottom-6 right-6 z-50">
+<button class="relative w-16 h-16 bg-primary rounded-full shadow-lg shadow-primary/40 flex items-center justify-center text-white active:scale-90 transition-transform">
+<span class="material-icons-round text-3xl">shopping_bag</span>
+<div class="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full border-2 border-white dark:border-background-dark flex items-center justify-center text-[10px] font-bold">
+                2
+            </div>
+</button>
+</div>
+<!-- Background Decoration -->
+<div class="fixed top-0 left-0 -z-10 opacity-20 pointer-events-none overflow-hidden h-screen w-screen">
+<div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+<div class="absolute bottom-1/4 -right-24 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
+</div>
+</body></html>

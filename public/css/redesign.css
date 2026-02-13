@@ -1,0 +1,39 @@
+:root{
+  --color-bg: #fffaf6;
+  --color-primary: #6b4f3b;
+  --color-accent: #d49a6a;
+  --color-muted: #6b6b6b;
+  --radius-sm: 6px;
+  --container-max: 1200px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Basic reset */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:var(--font-sans);background:var(--color-bg);color:#222}
+
+.container{max-width:var(--container-max);margin:0 auto;padding:0 var(--space-md)}
+
+/* Header */
+.ts-header{background:linear-gradient(90deg,var(--color-primary),#5a4333);color:#fff;padding:var(--space-md) 0}
+.ts-header .brand{font-weight:700;font-size:1.25rem}
+.ts-header nav{display:flex;gap:var(--space-md);align-items:center}
+.ts-header a{color:inherit;text-decoration:none}
+
+/* Simple responsive layout */
+.ts-header .row{display:flex;align-items:center;justify-content:space-between}
+
+@media (max-width:600px){
+  .ts-header nav{display:none}
+}
+
+/* Footer */
+.ts-footer{background:#f5efe9;padding:var(--space-lg) 0;color:var(--color-muted);border-top:1px solid #eee}
+.ts-footer .cols{display:flex;gap:var(--space-lg);flex-wrap:wrap}
+.ts-footer a{color:var(--color-muted);text-decoration:none}
+
+/* Utilities */
+.btn{background:var(--color-accent);color:#fff;padding:8px 12px;border-radius:var(--radius-sm);display:inline-block}

@@ -1,0 +1,237 @@
+/* TeaShop Application Styles */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* Tea Theme Colors */
+:root {
+    /* Tea Theme Colors */
+    --color-matcha: #6B8E23;         /* Olive Drab Green */
+    --color-chai: #D2691E;           /* Chocolate/Cinnamon */
+    --color-cream: #FAF9F6;          /* Off-White Background */
+    --color-slate: #2F4F4F;          /* Dark Slate Gray Text */
+    
+    /* Override Bootstrap Primary */
+    --bs-primary: var(--color-matcha);
+    --bs-primary-rgb: 107, 142, 35;
+    --bs-secondary: var(--color-chai);
+    --bs-secondary-rgb: 210, 105, 30;
+    
+    --bs-body-bg: var(--color-cream);
+    --bs-body-color: var(--color-slate);
+}
+
+/* Font Configuration */
+body {
+    font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+}
+
+/* Custom Components */
+.btn-primary {
+    background-color: var(--color-matcha);
+    border-color: var(--color-matcha);
+}
+
+.btn-primary:hover {
+    background-color: #5a7a1e;
+    border-color: #5a7a1e;
+}
+
+.btn-secondary {
+    background-color: var(--color-chai);
+    border-color: var(--color-chai);
+}
+
+.text-primary {
+    color: var(--color-matcha) !important;
+}
+
+.bg-primary {
+    background-color: var(--color-matcha) !important;
+}
+
+/* Product Cards */
+.product-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Cart FAB (Floating Action Button) */
+.cart-fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.cart-fab .btn {
+    width: 60px;
+    height: 60px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    animation: none;
+}
+
+.cart-fab .btn.bounce {
+    animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 20%, 60%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    80% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Admin Dashboard Cards */
+.stat-card {
+    background: linear-gradient(135deg, var(--color-matcha), #7ba428);
+    color: white;
+    border: none;
+    border-radius: 10px;
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    margin-bottom: 0;
+}
+
+/* Kitchen Display Board */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.kanban-column {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    min-height: 500px;
+}
+
+.order-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.order-card.status-pending {
+    border-left: 4px solid #007bff;
+}
+
+.order-card.status-confirmed {
+    border-left: 4px solid #ffc107;
+}
+
+.order-card.status-preparing {
+    border-left: 4px solid #fd7e14;
+}
+
+.order-card.status-ready {
+    border-left: 4px solid #28a745;
+}
+
+/* Table QR Code Display */
+.qr-code-preview {
+    max-width: 100px;
+    cursor: pointer;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .cart-fab {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .cart-fab .btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1055;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.form-control:focus {
+    border-color: var(--color-matcha);
+    box-shadow: 0 0 0 0.2rem rgba(107, 142, 35, 0.25);
+}
+
+/* Table Styling */
+.table th {
+    background-color: var(--color-matcha);
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.875em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-matcha);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5a7a1e;
+}

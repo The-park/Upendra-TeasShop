@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TeaShop Product Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6b8f24",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#1b1f13",
+                        "dark-slate": "#2F4F4F",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(107, 143, 36, 0.05);
+        }
+        .dark .glass-panel {
+            background: rgba(27, 31, 19, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-dark-slate dark:text-gray-200 min-h-screen transition-colors duration-200">
+<!-- Sidebar Navigation (Desktop) -->
+<div class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-zinc-900 border-r border-gray-100 dark:border-zinc-800 hidden lg:flex flex-col">
+<div class="p-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-icons-outlined text-white">eco</span>
+</div>
+<span class="text-xl font-bold tracking-tight">TeaShop<span class="text-primary">.</span></span>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg" href="#">
+<span class="material-icons-outlined">inventory_2</span>
+<span class="font-medium">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined">shopping_bag</span>
+<span class="font-medium">Orders</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined">people</span>
+<span class="font-medium">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-icons-outlined">analytics</span>
+<span class="font-medium">Analytics</span>
+</a>
+</nav>
+<div class="p-6 border-t border-gray-100 dark:border-zinc-800">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Admin user profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDad-c0UnhZFMh3jwMXe7BsB65FGaT0D7vNs8tWbmlhX_hrPk3-xkUO2PV4OmqxBP4g4PzBGyGAI_cQlTGn0r3GjQomO9N7MpHPBvkCyiG82Za2FE-v2ZopzlF6AQHAsIhKfJy5yZUP-uuDsGV_wYbOb0nyKtImo5hu2FK9qS8198gmli7zmwEjpociVWG9jbiJ1B7evqCNLAjz4hYdxNqDNICvFwS3CZdErESquLYkjYxjIMvKB-7tb3_eetz94NZMThON5s5aslg"/>
+<div>
+<p class="text-sm font-semibold">Alex Rivers</p>
+<p class="text-xs text-gray-400">Inventory Manager</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="lg:ml-64 p-8">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h1 class="text-3xl font-bold text-dark-slate dark:text-white">Product Inventory</h1>
+<p class="text-gray-500 dark:text-gray-400 mt-1">Manage and track your premium tea collection.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="pl-10 pr-4 py-2.5 w-64 md:w-80 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Search products..." type="text"/>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+<span class="material-icons-outlined">add</span>
+                    Add Product
+                </button>
+</div>
+</header>
+<!-- Stats Overview (Quick Glance) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-100 dark:border-zinc-800">
+<p class="text-sm text-gray-400 mb-1">Total Products</p>
+<p class="text-2xl font-bold">1,284</p>
+</div>
+<div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-100 dark:border-zinc-800">
+<p class="text-sm text-gray-400 mb-1">Low Stock</p>
+<p class="text-2xl font-bold text-orange-500">12</p>
+</div>
+<div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-100 dark:border-zinc-800">
+<p class="text-sm text-gray-400 mb-1">Categories</p>
+<p class="text-2xl font-bold">18</p>
+</div>
+<div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-100 dark:border-zinc-800">
+<p class="text-sm text-gray-400 mb-1">Avg. Price</p>
+<p class="text-2xl font-bold">$34.50</p>
+</div>
+</div>
+<!-- Inventory Table Container -->
+<div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden glass-panel">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/50">
+<th class="p-4 w-12 text-center">
+<input class="rounded text-primary focus:ring-primary border-gray-300" type="checkbox"/>
+</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Product</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Category</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Price</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Stock</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Availability</th>
+<th class="p-4 text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-50 dark:divide-zinc-800">
+<!-- Row 1 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="p-4 text-center">
+<input class="rounded text-primary focus:ring-primary border-gray-300" type="checkbox"/>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="High quality matcha powder in a bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu7X6PgnHyhZwn7ojmziuOF-46eSGyl6bTZ2YN-4sASb6YSJ2EkkeJyA12RBE-5mnqJ2n8GCdHN365iwK7-EB0YGwbBkezEtW6x97xUXSlHnYFtHkI3cZQarGTXJi3UmegpR1-W4dIp5S1LTmWPudBu-2s_B0lfBjoG0wxuIAt8gNEksGS2RqZUs7si87haLy4jHEfBEGUVzerBVKa0UfKfLmLDeQBY-aCXCAaeFUFB8Yhluv3liG9CiffTCPMxFzWWcfPA0ZgKno"/>
+</div>
+<div>
+<p class="font-semibold text-dark-slate dark:text-white">Ceremonial Grade Matcha</p>
+<p class="text-xs text-gray-400">SKU: TEA-MAT-001</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-sm">
+<span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md text-xs font-medium">Green Tea</span>
+</td>
+<td class="p-4 font-medium text-sm">$48.00</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-sm">124 units</span>
+</div>
+</td>
+<td class="p-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td>
+<td class="p-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-gray-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-icons-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="p-4 text-center">
+<input class="rounded text-primary focus:ring-primary border-gray-300" type="checkbox"/>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Loose leaf Earl Grey tea with bergamot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrcIs4l805L9HCrM8LlVzmOOmvxFD7hdVO8xDweyzbsiew59UmHdm6cmt2uR4pvKBm8p4RYta8300r6E3ltWZBzSQhZot4DmsudmVVgZnusOlceiSJ2ETtO3VnOd093Ke52vhpoZQagN6QBCHgk6BvqkrBUHliN6aAWffwmov6W7g1IrAlNNUXb3qH0tn1Nf8jcEI8cqvh_hhQsS8a0G0ZatlQooEeRWzs12OWEAz0arkoQA1GOJVqd_guO5zFnDiE4bnslTZkYrc"/>
+</div>
+<div>
+<p class="font-semibold text-dark-slate dark:text-white">Organic Earl Grey</p>
+<p class="text-xs text-gray-400">SKU: TEA-EGR-042</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-sm">
+<span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-md text-xs font-medium">Black Tea</span>
+</td>
+<td class="p-4 font-medium text-sm">$22.50</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-orange-400"></span>
+<span class="text-sm">8 units</span>
+</div>
+</td>
+<td class="p-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td>
+<td class="p-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-gray-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-icons-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="p-4 text-center">
+<input class="rounded text-primary focus:ring-primary border-gray-300" type="checkbox"/>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Japanese Sencha green tea leaves" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMVPuYk9oR1NBKEDFLzA1NKCXK_zpKyPuEfy8WqpOZuG0sZB2H0Si8vlJjKAJonkbygjQUNfzqUmb9sZKNwaakyBF9czTUyN4G1gzErKnpgFY4vl7ibKDr8ahdHQ81hZD8V8CL73NWfalgz1AphxsdOp_tKoPoCDFFqwgHO2XgjPN9EBFPAEyfYWNczkBTr-DOMgn0HCZnGfcTLJgQqb4h_Ewernl61KMvz-3kMclVQm_3ldso6_VYosB7il9dfgTfo8C1N_3uMDo"/>
+</div>
+<div>
+<p class="font-semibold text-dark-slate dark:text-white">Japanese Sencha</p>
+<p class="text-xs text-gray-400">SKU: TEA-SEN-015</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-sm">
+<span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md text-xs font-medium">Green Tea</span>
+</td>
+<td class="p-4 font-medium text-sm">$32.00</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-sm">56 units</span>
+</div>
+</td>
+<td class="p-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td>
+<td class="p-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-gray-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-icons-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="p-4 text-center">
+<input class="rounded text-primary focus:ring-primary border-gray-300" type="checkbox"/>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Bamboo matcha whisk and scoop set" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFdKP63Q25HpcRxcbAr7luvCQI84wE_Jm6xd1v6fKPgJ8KAk15gXrBWF5lYQXNo6mdGpyWrFE2kj7B9FDd6OQU8v3rkN_5o8mW8V-yJBs_CTcvTkqTgK_qY249gao4xrQu5Lh7N9_DzECyQbg2ay872N6tntzBlWGuuCCU8W1TM8-jLDSHJCPWyb3Jb0dSdScwSnzZaBYl4sidLOSSvvfc18TCKbVzdefCJCseppksQM6kWgLXbM1HWxhO8FUwfYhi7pO0Lx0VJWk"/>
+</div>
+<div>
+<p class="font-semibold text-dark-slate dark:text-white">Bamboo Whisk (Chasen)</p>
+<p class="text-xs text-gray-400">SKU: ACC-WHS-099</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-sm">
+<span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md text-xs font-medium">Accessories</span>
+</td>
+<td class="p-4 font-medium text-sm">$18.00</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-red-500"></span>
+<span class="text-sm">0 units</span>
+</div>
+</td>
+<td class="p-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td>
+<td class="p-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-gray-400 hover:text-primary transition-colors">
+<span class="material-icons-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-icons-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Section -->
+<div class="p-4 border-t border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
+<p class="text-sm text-gray-500 dark:text-gray-400">Showing 1 to 4 of 1,284 entries</p>
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50" disabled="">
+<span class="material-icons-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white font-semibold">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors font-medium">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors font-medium">3</button>
+<span class="px-2 text-gray-400">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors font-medium">128</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+<span class="material-icons-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Footer Note -->
+<footer class="mt-8 text-center text-gray-400 text-xs">
+            © 2024 Premium TeaShop Inventory System. All rights reserved.
+        </footer>
+</main>
+</body></html>

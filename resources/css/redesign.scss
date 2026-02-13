@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens as SASS variables */
+$color-bg: #fffaf6;
+$color-primary: #6b4f3b;
+$color-accent: #d49a6a;
+$color-muted: #6b6b6b;
+$radius-sm: 6px;
+$container-max: 1200px;
+$space-sm: 8px;
+$space-md: 16px;
+$space-lg: 24px;
+
+:root{
+  --container-max: #{$container-max};
+}
+
+/* Example utilities and base overrides for redesign */
+body{@apply bg-[var(--bg,white)] text-gray-900;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial}
+
+.container{max-width:$container-max;margin:0 auto;padding:0 $space-md}
+
+.ts-header{background:linear-gradient(90deg,$color-primary,#5a4333);color:#fff;padding:$space-md 0}
+.ts-header .brand{font-weight:700;font-size:1.25rem}
+
+.ts-footer{background:#f5efe9;padding:$space-lg 0;color:$color-muted;border-top:1px solid #eee}
+
+/* small helpers */
+.btn-custom{background:$color-accent;color:#fff;padding:8px 12px;border-radius:$radius-sm;display:inline-block}

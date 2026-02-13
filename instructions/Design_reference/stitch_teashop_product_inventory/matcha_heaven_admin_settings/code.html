@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Matcha Heaven Admin Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6b8f24",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#1b1f13",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "header": ["Outfit", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-header {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen font-display">
+<!-- Toast Notification -->
+<div class="fixed top-6 right-6 z-50 flex items-center gap-3 bg-white dark:bg-slate-800 border-l-4 border-primary px-4 py-3 rounded-lg shadow-xl animate-bounce-subtle">
+<span class="material-icons-round text-primary">check_circle</span>
+<p class="text-sm font-medium">Settings updated successfully</p>
+<button class="ml-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-icons-round text-sm">close</span>
+</button>
+</div>
+<div class="flex min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full">
+<div class="p-8">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
+<span class="material-icons-round">eco</span>
+</div>
+<span class="font-header font-bold text-xl tracking-tight">Matcha Heaven</span>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all" href="#">
+<span class="material-icons-round">storefront</span>
+<span>Business Info</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-icons-round">shopping_cart</span>
+<span>Ordering</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-icons-round">notifications_active</span>
+<span>Email &amp; Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-icons-round">payments</span>
+<span>Payments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-icons-round">people</span>
+<span>Staff Management</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-8 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Admin profile portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjI1N-XTz_FWSOOQwGexFliW1E8yO9a93AI46b0txXHm181qk6u36WslayGQ30veNNJGSn5vBtenZZ3XmQZNUxF6C4EEqN3ae0NK4OAnyejEGXintRo4Biss2WL3bB0GzCQq1atFV0tUgkkaVE2lgQSBhzE0asAsazctp-CTaNaXxODowyci_ZT-GdSkNJS2JLYWWSIQu5UOLtNt8NF8WMipr20ZClk5xqLFypdjhSH-NI4s6KL2yfGUQHbXXp5DFQ1DO6GVQ9coU"/>
+<div>
+<p class="text-sm font-bold">Alex Chen</p>
+<p class="text-xs text-slate-500">Store Manager</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-72 flex-1 p-12 max-w-6xl">
+<!-- Header Section -->
+<header class="mb-10 flex justify-between items-end">
+<div>
+<nav class="flex text-xs font-medium text-slate-400 gap-2 mb-2">
+<span>Admin</span>
+<span>/</span>
+<span class="text-primary">Settings</span>
+</nav>
+<h1 class="font-header text-4xl font-bold tracking-tight">Business Settings</h1>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 px-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<span class="text-sm font-medium text-slate-500">Shop Status:</span>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-primary uppercase">Open</span>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary transition-colors focus:outline-none">
+<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+</button>
+</div>
+</div>
+</header>
+<!-- Form Content -->
+<div class="space-y-8">
+<!-- Shop Identity Section -->
+<section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-8 border-b border-slate-100 dark:border-slate-800">
+<h2 class="font-header text-xl font-bold">Shop Identity</h2>
+<p class="text-slate-500 text-sm mt-1">Update your basic shop information and contact details.</p>
+</div>
+<div class="p-8 grid grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Shop Name</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-primary focus:border-primary outline-none transition-all" type="text" value="Matcha Heaven - Downtown"/>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Contact Email</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-primary focus:border-primary outline-none transition-all" type="email" value="hello@matchaheaven.com"/>
+</div>
+<div class="space-y-2 col-span-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Physical Address</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-primary focus:border-primary outline-none transition-all" type="text" value="128 Green Tea Lane, Botanical District, MH 90210"/>
+</div>
+</div>
+</section>
+<!-- Opening Hours Section -->
+<section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-8 border-b border-slate-100 dark:border-slate-800">
+<h2 class="font-header text-xl font-bold">Operating Hours</h2>
+<p class="text-slate-500 text-sm mt-1">Set your weekly schedule for customer orders.</p>
+</div>
+<div class="p-8 space-y-4">
+<!-- Mon-Fri Row -->
+<div class="flex items-center justify-between py-2">
+<div class="w-32">
+<span class="font-semibold">Monday - Friday</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="w-32 text-center bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2 focus:ring-primary focus:border-primary outline-none" type="text" value="08:00 AM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+<span class="text-slate-300">to</span>
+<div class="relative">
+<input class="w-32 text-center bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2 focus:ring-primary focus:border-primary outline-none" type="text" value="09:00 PM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-400 uppercase">Status</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-primary transition-colors">
+<span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform translate-x-5"></span>
+</div>
+</div>
+</div>
+<hr class="border-slate-100 dark:border-slate-800"/>
+<!-- Sat Row -->
+<div class="flex items-center justify-between py-2">
+<div class="w-32">
+<span class="font-semibold">Saturday</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="w-32 text-center bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2 focus:ring-primary focus:border-primary outline-none" type="text" value="09:00 AM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+<span class="text-slate-300">to</span>
+<div class="relative">
+<input class="w-32 text-center bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2 focus:ring-primary focus:border-primary outline-none" type="text" value="10:00 PM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-400 uppercase">Status</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-primary transition-colors">
+<span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform translate-x-5"></span>
+</div>
+</div>
+</div>
+<hr class="border-slate-100 dark:border-slate-800"/>
+<!-- Sun Row -->
+<div class="flex items-center justify-between py-2">
+<div class="w-32">
+<span class="font-semibold">Sunday</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="w-32 text-center bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg py-2 opacity-50 cursor-not-allowed" disabled="" type="text" value="09:00 AM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+<span class="text-slate-300">to</span>
+<div class="relative">
+<input class="w-32 text-center bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-lg py-2 opacity-50 cursor-not-allowed" disabled="" type="text" value="06:00 PM"/>
+<span class="absolute right-2 top-2.5 material-icons-round text-slate-400 text-sm">schedule</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-400 uppercase">Status</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors">
+<span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform translate-x-1"></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Ordering Section (Semi-visible Background Context) -->
+<section class="opacity-60 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="p-8 border-b border-slate-100 dark:border-slate-800">
+<h2 class="font-header text-xl font-bold">Quick Ordering Config</h2>
+</div>
+<div class="p-8 grid grid-cols-3 gap-8">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Tax Rate (%)</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5" type="text" value="8.5"/>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Min. Order Amount</label>
+<div class="relative">
+<span class="absolute left-4 top-2.5 text-slate-400">$</span>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-4 py-2.5" type="text" value="12.00"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Currency</label>
+<select class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5">
+<option>USD - US Dollar</option>
+</select>
+</div>
+</div>
+</section>
+</div>
+<!-- Sticky Save Footer -->
+<footer class="mt-12 flex justify-end gap-4 pb-12">
+<button class="px-6 py-2.5 rounded-xl font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                    Discard Changes
+                </button>
+<button class="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all">
+<svg class="animate-spin h-4 w-4 text-white" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+                    Save Changes
+                </button>
+</footer>
+</main>
+</div>
+<!-- Background Decorative Elements -->
+<div class="fixed top-0 right-0 -z-10 w-1/3 h-1/2 bg-gradient-to-bl from-primary/5 to-transparent pointer-events-none"></div>
+<div class="fixed bottom-0 left-72 -z-10 w-1/2 h-1/3 bg-gradient-to-tr from-primary/5 to-transparent pointer-events-none"></div>
+</body></html>
