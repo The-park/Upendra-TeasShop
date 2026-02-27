@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('table_name', 100)->nullable()->comment('Optional friendly name');
             $table->string('qr_code_string', 255)->unique();
             $table->string('qr_code_image_path', 500)->nullable();
-            $table->tinyInteger('seating_capacity')->default(4);
+            $table->tinyInteger('capacity')->default(4);
             $table->string('location', 100)->nullable()->comment('Indoor/Outdoor/Patio');
             $table->enum('status', ['available', 'occupied', 'reserved', 'maintenance'])->default('available');
             $table->boolean('is_active')->default(true);
