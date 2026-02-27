@@ -1,64 +1,69 @@
-<section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
+<form id="send-verification" method="post" action="{{ route('verification.send') }}">
+    @csrf
+</form>
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
+<form method="post" action="{{ route('profile.update') }}">
+    @csrf
+    @method('patch')
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
+    <div class="mb-3">
+        <label for="name" class="form-label fw-semibold">
+            <i class="bi bi-person me-1 text-muted"></i>Full Name
+        </label>
+        <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-type"></i></span>
+            <input id="name" name="name" type="text"
+                   class="form-control @error('name') is-invalid @enderror"
+                   value="{{ old('name', $user->name) }}"
+                   required autofocus autocomplete="name"
+                   placeholder="Your full name" />
+            @error('name')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
-        @csrf
-        @method('patch')
-
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+    <div class="mb-4">
+        <label for="email" class="form-label fw-semibold">
+            <i class="bi bi-envelope me-1 text-muted"></i>Email Address
+        </label>
+        <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-at"></i></span>
+            <input id="email" name="email" type="email"
+                   class="form-control @error('email') is-invalid @enderror"
+                   value="{{ old('email', $user->email) }}"
+                   required autocomplete="username"
+                   placeholder="you@example.com" />
+            @error('email')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
+        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            <div class="alert alert-warning mt-2 py-2 px-3 small">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                {{ __('Your email address is unverified.') }}
+                <button form="send-verification" class="btn btn-link btn-sm p-0 align-baseline">
+                    {{ __('Re-send verification email') }}
+                </button>
+            </div>
+            @if (session('status') === 'verification-link-sent')
+                <div class="alert alert-success mt-2 py-2 px-3 small">
+                    <i class="bi bi-check-circle me-1"></i>
+                    {{ __('A new verification link has been sent to your email address.') }}
                 </div>
             @endif
-        </div>
+        @endif
+    </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
-        </div>
-    </form>
-</section>
+    <div class="d-flex align-items-center gap-3">
+        <button type="submit" class="btn btn-success px-4">
+            <i class="bi bi-check-lg me-2"></i>Save Changes
+        </button>
+        @if (session('status') === 'profile-updated')
+            <span class="saved-flash text-success small fw-semibold">
+                <i class="bi bi-check-circle-fill me-1"></i>Saved!
+            </span>
+        @endif
+    </div>
+</form>
