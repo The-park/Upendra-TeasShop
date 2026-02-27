@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class MenuController extends Controller
 {
@@ -14,19 +16,26 @@ class MenuController extends Controller
      */
     public function index(Request $request)
     {
-        // Get table if provided
-        $table = null;
+        // Auto-select table from QR code string in query param
         if ($request->filled('table')) {
-            $table = RestaurantTable::where('table_number', $request->table)
+            $table = RestaurantTable::where('qr_code_string', $request->table)
+                ->orWhere('table_number', $request->table)
                 ->where('is_active', true)
                 ->first();
+
+            if ($table) {
+                Session::put('selected_table_id', $table->id);
+                Session::put('selected_table_number', $table->table_number);
+                Session::put('selected_table_name', $table->table_name ?: 'Table '.$table->table_number);
+                // Redirect clean (remove ?table= from URL)
+                return redirect()->route('menu');
+            }
         }
 
         // Get active categories with their active products
         $categories = Category::where('is_active', true)
             ->with(['products' => function ($query) {
-                $query->where('is_available', true)
-                    ->orderBy('name');
+                $query->where('is_available', true)->orderBy('name');
             }])
             ->withCount(['products' => function ($query) {
                 $query->where('is_available', true);
@@ -36,21 +45,34 @@ class MenuController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Get featured products
-        $featuredProducts = Product::where('is_available', true)
-            ->where('is_featured', true)
-            ->with('category')
-            ->orderBy('name')
-            ->take(6)
-            ->get();
-
-        // Also provide a flat products list for the menu grid/search
+        // Flat products list
         $products = Product::where('is_available', true)
             ->with('category')
+            ->orderBy('category_id')
             ->orderBy('name')
             ->get();
 
-        return view('public.menu.index', compact('categories', 'featuredProducts', 'products', 'table'));
+        // Available tables for picker (active + available status)
+        $availableTables = RestaurantTable::where('is_active', true)
+            ->whereIn('status', ['available', 'active', 'free'])
+            ->orderBy('table_number')
+            ->get();
+
+        // Settings
+        $restaurantName  = Setting::get('restaurant_name', config('app.name', 'TeaShop Delight'));
+        $currencySymbol  = Setting::get('currency_symbol', '$');
+        $taxRate         = (float) Setting::get('tax_rate', 0);
+        $serviceCharge   = (float) Setting::get('service_charge', 0);
+
+        // Current session table
+        $selectedTableId     = Session::get('selected_table_id');
+        $selectedTableNumber = Session::get('selected_table_number');
+
+        return view('public.menu.index', compact(
+            'categories', 'products', 'availableTables',
+            'restaurantName', 'currencySymbol', 'taxRate', 'serviceCharge',
+            'selectedTableId', 'selectedTableNumber'
+        ));
     }
 
     /**
