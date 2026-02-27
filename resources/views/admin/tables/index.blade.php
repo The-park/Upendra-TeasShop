@@ -1,306 +1,201 @@
 @extends('layouts.admin')
-
-@section('title', 'Restaurant Tables Management')
-
+@section('title', 'Restaurant Tables')
+@section('breadcrumb')
+<li class="breadcrumb-item active">Tables</li>
+@endsection
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box">
-            <h4 class="page-title">Restaurant Tables</h4>
-            <ol class="breadcrumb float-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Tables</li>
-            </ol>
-        </div>
+<div class="page-header-bar">
+    <div class="page-title-group">
+        <h1 class="page-title"><i class="bi bi-grid me-2 text-success"></i>Restaurant Tables</h1>
+        <p class="page-subtitle">Manage dining tables and their QR codes</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.tables.create') }}" class="btn btn-tea">
+            <i class="bi bi-plus-circle me-1"></i>Add Table
+        </a>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <h4 class="header-title">Table Management</h4>
-                        <p class="text-muted">Manage your restaurant tables and QR codes</p>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <a href="{{ route('admin.tables.create') }}" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Add New Table
-                        </a>
-                    </div>
-                </div>
-
-                @if($tables->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Table Number</th>
-                                    <th>Capacity</th>
-                                    <th>Location</th>
-                                    <th>QR Code</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th width="200">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($tables as $table)
-                                    <tr>
-                                        <td>
-                                            <strong class="h6">{{ $table->table_number }}</strong>
-                                        </td>
-                                        <td>
-                                            <i class="fas fa-users text-muted mr-1"></i>
-                                            {{ $table->capacity }} {{ Str::plural('person', $table->capacity) }}
-                                        </td>
-                                        <td>
-                                            @if($table->location)
-                                                <small class="text-muted">{{ $table->location }}</small>
-                                            @else
-                                                <em class="text-muted">Not specified</em>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($table->qr_code_path)
-                                                @php
-                                                    $ext = strtolower(pathinfo($table->qr_code_path, PATHINFO_EXTENSION));
-                                                @endphp
-                                                @if(in_array($ext, ['png','jpg','jpeg','svg']))
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="{{ Storage::disk('public')->url($table->qr_code_path) }}" alt="QR" style="width:64px;height:64px;object-fit:contain;border-radius:6px;margin-right:8px;border:1px solid #e9ecef;" />
-                                                        <div>
-                                                            <div><small class="text-muted">Generated {{ $table->qr_code_generated_at ? $table->qr_code_generated_at->format('M j') : 'Unknown' }}</small></div>
-                                                                    <div class="mt-1">
-                                                                        <a href="{{ route('admin.tables.download-qr', $table) }}" class="btn btn-sm btn-outline-secondary">Download Image</a>
-                                                                        <a href="{{ route('admin.tables.download-qr-pdf', $table) }}" class="btn btn-sm btn-outline-primary ms-2">Download PDF</a>
-                                                                    </div>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="badge badge-success mr-2">
-                                                            <i class="fas fa-qrcode"></i> Generated
-                                                        </span>
-                                                        <small class="text-muted">
-                                                            {{ $table->qr_code_generated_at ? $table->qr_code_generated_at->format('M j') : 'Unknown' }}
-                                                        </small>
-                                                    </div>
-                                                @endif
-                                            @else
-                                                <span class="badge badge-warning">
-                                                    <i class="fas fa-exclamation-triangle"></i> Not Generated
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-{{ $table->is_active ? 'success' : 'secondary' }}">
-                                                {{ $table->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ $table->created_at->format('M j, Y') }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.tables.show', $table) }}" 
-                                                   class="btn btn-sm btn-info" title="View">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.tables.edit', $table) }}" 
-                                                   class="btn btn-sm btn-warning" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-primary" 
-                                                        onclick="generateQR({{ $table->id }})" title="Generate QR">
-                                                    <i class="fas fa-qrcode"></i>
-                                                </button>
-                                                @if($table->qr_code_path)
-                                                    <a href="{{ route('admin.tables.download-qr', $table) }}" 
-                                                       class="btn btn-sm btn-secondary" title="Download QR">
-                                                        <i class="fas fa-download"></i>
-                                                    </a>
-                                                @endif
-                                                <button type="button" class="btn btn-sm btn-danger" 
-                                                        onclick="deleteTable({{ $table->id }})" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Quick Statistics -->
-                    <div class="row mt-4">
-                        @php
-                            $totalTables = $tables->count();
-                            $activeTables = $tables->where('is_active', true)->count();
-                            $qrGenerated = $tables->whereNotNull('qr_code_path')->count();
-                            $totalCapacity = $tables->sum('capacity');
-                        @endphp
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h4 class="mb-1">{{ $totalTables }}</h4>
-                                    <p class="mb-0">Total Tables</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h4 class="mb-1">{{ $activeTables }}</h4>
-                                    <p class="mb-0">Active Tables</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h4 class="mb-1">{{ $qrGenerated }}</h4>
-                                    <p class="mb-0">QR Generated</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body text-center">
-                                    <h4 class="mb-1">{{ $totalCapacity }}</h4>
-                                    <p class="mb-0">Total Capacity</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="text-center py-5">
-                        <i class="fas fa-chair fa-3x text-muted mb-3"></i>
-                        <h5>No tables found</h5>
-                        <p class="text-muted">Create your first table to get started with table management.</p>
-                        <a href="{{ route('admin.tables.create') }}" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Create First Table
-                        </a>
-                    </div>
-                @endif
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon"><i class="bi bi-grid"></i></div>
+            <div class="stat-info">
+                <h3>{{ $tables->count() }}</h3>
+                <p>Total Tables</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-teal">
+            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info">
+                <h3>{{ $tables->where('is_active', true)->count() }}</h3>
+                <p>Active Tables</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-brown">
+            <div class="stat-icon"><i class="bi bi-qr-code"></i></div>
+            <div class="stat-info">
+                <h3>{{ $tables->whereNotNull('qr_code')->count() }}</h3>
+                <p>With QR Code</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-gold">
+            <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-info">
+                <h3>{{ $tables->where('is_active', false)->count() }}</h3>
+                <p>Inactive</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- QR Generation Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1" role="dialog" aria-labelledby="qrModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="card">
+    <div class="card-body p-0">
+        @if($tables->count() > 0)
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Table #</th>
+                        <th>Name / Location</th>
+                        <th>Capacity</th>
+                        <th>QR Code</th>
+                        <th>Status</th>
+                        <th width="160">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tables as $table)
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded bg-tea-pale d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;background:var(--tea-pale);color:var(--tea-dark);">
+                                    {{ $table->table_number }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" style="font-size:13px;">{{ $table->name ?? 'Table '.$table->table_number }}</div>
+                            @if($table->location)
+                            <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ $table->location }}</small>
+                            @endif
+                        </td>
+                        <td>
+                            @if($table->capacity)
+                            <span class="badge badge-pill-info"><i class="bi bi-people me-1"></i>{{ $table->capacity }}</span>
+                            @else
+                            <span class="text-muted">�</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($table->qr_code)
+                            <button class="btn btn-sm btn-outline-primary"
+                                    onclick="showQR('{{ $table->table_number }}', '{{ asset('storage/'.$table->qr_code) }}')">
+                                <i class="bi bi-qr-code me-1"></i>View QR
+                            </button>
+                            @else
+                            <form action="{{ route('admin.tables.generate-qr', $table) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-qr-code-scan me-1"></i>Generate
+                                </button>
+                            </form>
+                            @endif
+                        </td>
+                        <td>
+                            @if($table->is_active)
+                            <span class="badge badge-pill-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                            @else
+                            <span class="badge badge-pill-secondary"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('admin.tables.show', $table) }}" class="btn btn-sm btn-outline-secondary" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="{{ route('admin.tables.edit', $table) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                <button class="btn btn-sm btn-outline-danger" title="Delete"
+                                        onclick="confirmDelete({{ $table->id }}, '{{ $table->table_number }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div class="empty-state">
+            <i class="bi bi-grid empty-icon"></i>
+            <h5>No Tables Yet</h5>
+            <p>Add your first restaurant table to get started.</p>
+            <a href="{{ route('admin.tables.create') }}" class="btn btn-tea"><i class="bi bi-plus-circle me-1"></i>Add First Table</a>
+        </div>
+        @endif
+    </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="qrModalLabel">Generate QR Code</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title"><i class="bi bi-qr-code me-2 text-primary"></i>QR Code � Table <span id="qrTableNum"></span></h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
-                <p>Generate QR code for table menu access?</p>
-                <p class="text-muted">Customers will scan this QR code to access the menu for their table.</p>
+            <div class="modal-body text-center py-4">
+                <img id="qrImage" src="" alt="QR Code" class="img-fluid" style="max-width:220px;">
+                <p class="text-muted mt-3 mb-0" style="font-size:13px;">Customers scan this to view the menu</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmGenerateQR">
-                    <i class="fas fa-qrcode"></i> Generate QR Code
-                </button>
+                <a id="qrDownload" href="#" download class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>Download</a>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete Table</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this table?</p>
-                <p class="text-danger">This action cannot be undone and will remove the table and its QR code.</p>
+                <p>Are you sure you want to delete <strong>Table <span id="deleteTableNum"></span></strong>? This cannot be undone.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete Table</button>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" class="d-inline">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
-let currentTableId = null;
-
-function generateQR(tableId) {
-    currentTableId = tableId;
-    const modalEl = document.getElementById('qrModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
+function showQR(num, url) {
+    document.getElementById('qrTableNum').textContent = num;
+    document.getElementById('qrImage').src = url;
+    document.getElementById('qrDownload').href = url;
+    new bootstrap.Modal(document.getElementById('qrModal')).show();
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-    const confirmBtn = document.getElementById('confirmGenerateQR');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function () {
-            if (!currentTableId) return;
-            const button = this;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-
-            fetch(`/admin/tables/${currentTableId}/generate-qr`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-            }).then(response => response.json())
-            .then(response => {
-                if (response && response.success) {
-                    const modalEl = document.getElementById('qrModal');
-                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                    if (modalInstance) modalInstance.hide();
-                    location.reload();
-                } else {
-                    alert('Error: ' + (response.message || 'Unknown error'));
-                }
-            })
-            .catch(() => {
-                alert('Error generating QR code. Please try again.');
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-qrcode"></i> Generate QR Code';
-            });
-        });
-    }
-});
-
-function deleteTable(tableId) {
-    const form = document.getElementById('deleteForm');
-    if (form) {
-        form.setAttribute('action', `/admin/tables/${tableId}`);
-    }
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    modal.show();
+function confirmDelete(id, num) {
+    document.getElementById('deleteTableNum').textContent = num;
+    document.getElementById('deleteForm').action = `{{ url('admin/tables') }}/${id}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 </script>
 @endpush

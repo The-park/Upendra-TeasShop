@@ -109,7 +109,12 @@ class Product extends Model
      */
     public function getFormattedPriceAttribute()
     {
-        return '$' . number_format($this->price, 2);
+        try {
+            $symbol = \App\Models\Setting::get('currency_symbol', '$');
+        } catch (\Exception $e) {
+            $symbol = '$';
+        }
+        return $symbol . number_format($this->price, 2);
     }
 
     /**

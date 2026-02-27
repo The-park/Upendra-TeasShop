@@ -12,16 +12,18 @@ class RestaurantTable extends Model
         'table_number',
         'table_name',
         'qr_code_string',
-        'qr_code_image_path',
-        'seating_capacity',
+        'qr_code_path',
+        'qr_code_generated_at',
+        'capacity',
         'location',
         'status',
         'is_active'
     ];
 
     protected $casts = [
-        'seating_capacity' => 'integer',
-        'is_active' => 'boolean'
+        'capacity' => 'integer',
+        'is_active' => 'boolean',
+        'qr_code_generated_at' => 'datetime',
     ];
 
     /**

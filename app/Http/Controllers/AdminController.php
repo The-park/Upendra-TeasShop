@@ -96,7 +96,7 @@ class AdminController extends Controller
     public function salesReport(Request $request)
     {
         // TODO: Implement sales reporting
-        return view('admin.analytics.sales');
+        return view('admin.reports.sales');
     }
 
     /**
@@ -105,7 +105,7 @@ class AdminController extends Controller
     public function productReport(Request $request)
     {
         // TODO: Implement product reporting
-        return view('admin.analytics.products');
+        return view('admin.reports.products');
     }
 
     /**

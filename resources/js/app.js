@@ -1,9 +1,13 @@
 // TeaShop Application JavaScript
 import './bootstrap';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import $ from 'jquery';
 
-// Global jQuery and Bootstrap setup
-window.$ = window.jQuery = require('jquery');
+// Expose Bootstrap globally so inline/blade scripts can call bootstrap.Modal etc.
+window.bootstrap = bootstrap;
+
+// Expose jQuery globally so inline scripts and CDN-independent views can use it
+window.$ = window.jQuery = $;
 
 // CSRF Token Setup for AJAX
 $.ajaxSetup({

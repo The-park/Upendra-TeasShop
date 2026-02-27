@@ -1,379 +1,243 @@
 @extends('layouts.admin')
-
-@section('title', 'Live Orders Display')
-
-@push('styles')
-<style>
-.order-card {
-    border-left: 4px solid #6c757d;
-    transition: all 0.3s ease;
-}
-
-.order-card.status-pending {
-    border-left-color: #dc3545;
-}
-
-.order-card.status-confirmed {
-    border-left-color: #ffc107;
-}
-
-.order-card.status-preparing {
-    border-left-color: #17a2b8;
-}
-
-.order-card.status-ready {
-    border-left-color: #28a745;
-}
-
-.order-item {
-    padding: 10px;
-    border-bottom: 1px solid #f8f9fa;
-}
-
-.order-item:last-child {
-    border-bottom: none;
-}
-
-.order-timer {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-}
-
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-
-.auto-refresh-indicator {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1050;
-}
-</style>
-@endpush
-
+@section('title', 'Live Kitchen Display')
+@section('breadcrumb')
+<li class="breadcrumb-item active">Live Kitchen</li>
+@endsection
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box">
-            <h4 class="page-title">Live Orders Display</h4>
-            <ol class="breadcrumb float-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Live Orders</li>
-            </ol>
+<div class="page-header-bar">
+    <div class="page-title-group">
+        <h1 class="page-title"><i class="bi bi-activity me-2 text-danger"></i>Live Kitchen Display</h1>
+        <p class="page-subtitle">Real-time active orders � auto-refreshes every <span id="refresh-countdown">5</span>s</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <span id="auto-refresh-badge" class="badge badge-pill-success"><i class="bi bi-broadcast me-1"></i>Live</span>
+        <button id="toggle-refresh" class="btn btn-sm btn-outline-secondary" title="Pause/Resume">
+            <i class="bi bi-pause-fill" id="toggle-icon"></i>
+        </button>
+        <button onclick="loadOrders()" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i>Refresh Now</button>
+        <a href="{{ route('admin.orders.history') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock-history me-1"></i>History</a>
+    </div>
+</div>
+
+<!-- Stats bar -->
+<div class="row g-2 mb-3" id="stats-bar">
+    <div class="col-6 col-sm-3">
+        <div class="card text-center py-2">
+            <div class="fw-bold fs-4 text-danger" id="stat-pending">0</div>
+            <div class="text-muted" style="font-size:12px;"><i class="bi bi-clock me-1"></i>Pending</div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-3">
+        <div class="card text-center py-2">
+            <div class="fw-bold fs-4 text-warning" id="stat-confirmed">0</div>
+            <div class="text-muted" style="font-size:12px;"><i class="bi bi-check-circle me-1"></i>Confirmed</div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-3">
+        <div class="card text-center py-2">
+            <div class="fw-bold fs-4 text-info" id="stat-preparing">0</div>
+            <div class="text-muted" style="font-size:12px;"><i class="bi bi-arrow-repeat me-1"></i>Preparing</div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-3">
+        <div class="card text-center py-2">
+            <div class="fw-bold fs-4 text-success" id="stat-ready">0</div>
+            <div class="text-muted" style="font-size:12px;"><i class="bi bi-check2-circle me-1"></i>Ready</div>
         </div>
     </div>
 </div>
 
-<!-- Control Panel -->
-<div class="row mb-3">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h5 class="mb-0">Kitchen Display</h5>
-                        <small class="text-muted">Live order updates every 5 seconds</small>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <button type="button" class="btn btn-success mr-2" id="refreshBtn">
-                            <i class="fas fa-sync"></i> Refresh Now
-                        </button>
-                        <button type="button" class="btn btn-info" id="toggleAutoRefresh">
-                            <i class="fas fa-pause"></i> Pause Auto-Refresh
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Orders Grid -->
+<div id="orders-container" class="row g-3">
+    <div class="col-12 text-center py-5 text-muted">
+        <div class="spinner-border text-tea mb-3" role="status" style="color:var(--tea-accent);"></div>
+        <p>Loading orders...</p>
     </div>
 </div>
 
-<!-- Orders Display -->
-<div class="row" id="ordersContainer">
-    <div class="col-12 text-center py-5">
-        <i class="fas fa-spinner fa-spin fa-2x text-muted mb-3"></i>
-        <p class="text-muted">Loading orders...</p>
-    </div>
-</div>
-
-<!-- Auto-refresh indicator -->
-<div class="auto-refresh-indicator">
-    <span class="badge badge-success" id="autoRefreshStatus">
-        <i class="fas fa-sync fa-spin"></i> Auto-refresh ON
-    </span>
-</div>
-
-<!-- Order Update Modal -->
-<div class="modal fade" id="updateOrderModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusUpdateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Update Order Status</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Update Order Status</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="updateOrderForm">
-                    @csrf
-                    <input type="hidden" id="updateOrderId">
-                    <div class="form-group">
-                        <label for="newStatus">New Status:</label>
-                        <select class="form-control" id="newStatus" required>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="preparing">Preparing</option>
-                            <option value="ready">Ready</option>
-                            <option value="delivered">Delivered</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmUpdateOrder">Update Status</button>
+                <input type="hidden" id="modal-order-id">
+                <p class="text-muted mb-3">Change status for <strong id="modal-order-number"></strong></p>
+                <div class="d-grid gap-2" id="status-buttons"></div>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
+@push('styles')
+<style>
+.order-card { border-left: 5px solid #dee2e6; transition: transform .15s; }
+.order-card:hover { transform: translateY(-2px); }
+.order-card.status-pending   { border-left-color: #dc3545; }
+.order-card.status-confirmed { border-left-color: #ffc107; }
+.order-card.status-preparing { border-left-color: #0dcaf0; }
+.order-card.status-ready     { border-left-color: #198754; }
+.order-item-row { padding:8px 0; border-bottom:1px solid #f0f0f0; }
+.order-item-row:last-child { border-bottom:none; }
+.elapsed-badge { font-size:11px; padding:4px 8px; }
+</style>
+@endpush
 @push('scripts')
 <script>
-let autoRefreshInterval;
-let isAutoRefreshEnabled = true;
+window._currency = '{{ $currencySymbol ?? "$" }}';
+const REFRESH_INTERVAL = 5000;
+let refreshTimer = null;
+let countdownTimer = null;
+let isRunning = true;
+let countdown = 5;
 
-$(document).ready(function() {
-    // Initial load
-    loadOrders();
-    
-    // Start auto-refresh
-    startAutoRefresh();
-    
-    // Manual refresh
-    $('#refreshBtn').click(function() {
-        loadOrders();
-    });
-    
-    // Toggle auto-refresh
-    $('#toggleAutoRefresh').click(function() {
-        if (isAutoRefreshEnabled) {
-            stopAutoRefresh();
-        } else {
-            startAutoRefresh();
-        }
-    });
-    
-    // Update order status
-    $('#confirmUpdateOrder').click(function() {
-        updateOrderStatus();
-    });
-});
+const statusMeta = {
+    pending:   { color:'danger',  icon:'clock',         label:'Pending'   },
+    confirmed: { color:'warning', icon:'check-circle',  label:'Confirmed' },
+    preparing: { color:'info',    icon:'arrow-repeat',  label:'Preparing' },
+    ready:     { color:'success', icon:'check2-circle', label:'Ready'     }
+};
 
-function loadOrders() {
-    $.get('{{ route("admin.orders.live-feed") }}')
-        .done(function(orders) {
-            renderOrders(orders);
-        })
-        .fail(function() {
-            $('#ordersContainer').html(`
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
-                    <p class="text-muted">Failed to load orders. <button class="btn btn-link p-0" onclick="loadOrders()">Try again</button></p>
-                </div>
-            `);
-        });
+const nextStatus = { pending:'confirmed', confirmed:'preparing', preparing:'ready', ready:'delivered' };
+const nextLabel  = { pending:'? Confirm', confirmed:'?? Start Prep', preparing:'?? Mark Ready', ready:'?? Delivered' };
+
+function elapsed(created_at) {
+    const diff = Math.floor((Date.now() - new Date(created_at)) / 60000);
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return diff + 'm ago';
+    return Math.floor(diff/60) + 'h ' + (diff%60) + 'm';
 }
 
 function renderOrders(orders) {
+    const counts = { pending:0, confirmed:0, preparing:0, ready:0 };
+    orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
+    ['pending','confirmed','preparing','ready'].forEach(s => {
+        document.getElementById('stat-'+s).textContent = counts[s];
+    });
+
+    const container = document.getElementById('orders-container');
     if (orders.length === 0) {
-        $('#ordersContainer').html(`
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                <h5>All caught up!</h5>
-                <p class="text-muted">No pending orders at the moment.</p>
+        container.innerHTML = `
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="bi bi-cup-hot empty-icon"></i>
+                <h5>No Active Orders</h5>
+                <p>All caught up! No pending orders right now.</p>
             </div>
-        `);
+        </div>`;
         return;
     }
-    
-    let html = '';
-    
-    orders.forEach(function(order) {
-        const timeSinceOrder = getTimeSinceOrder(order.created_at);
-        const statusClass = getStatusClass(order.status);
-        const statusColor = getStatusColor(order.status);
-        
-        html += `
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card order-card status-${order.status} h-100">
-                    <div class="card-header bg-${statusColor} text-white">
-                        <div class="row align-items-center">
-                            <div class="col">
-                                <h6 class="mb-0">${order.order_number}</h6>
-                                <small>Table ${order.restaurant_table.table_number}</small>
-                            </div>
-                            <div class="col-auto">
-                                <span class="order-timer ${order.status === 'pending' ? 'pulse' : ''}">
-                                    ${timeSinceOrder}
-                                </span>
-                            </div>
-                        </div>
+
+    container.innerHTML = orders.map(order => {
+        const meta = statusMeta[order.status] || { color:'secondary', icon:'question', label:order.status };
+        const itemsHtml = (order.items || []).map(item => `
+            <div class="order-item-row d-flex justify-content-between align-items-center">
+                <span style="font-size:13px;">${item.product_name}</span>
+                <span class="badge badge-pill-secondary">x${item.quantity}</span>
+            </div>`).join('');
+        const next = nextStatus[order.status];
+        const nextBtn = next ? `<button class="btn btn-sm btn-${meta.color} me-1"
+            onclick="quickUpdate(${order.id}, '${next}')">
+            ${nextLabel[order.status]}
+        </button>` : '';
+        return `
+        <div class="col-md-6 col-xl-4">
+            <div class="card order-card status-${order.status} h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <div class="fw-bold">#${order.order_number}
+                        <span class="ms-2 badge badge-pill-${meta.color}">
+                            <i class="bi bi-${meta.icon} me-1"></i>${meta.label}
+                        </span>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="p-3 border-bottom">
-                            <strong>${order.customer_name}</strong>
-                            ${order.customer_phone ? '<br><small class="text-muted">' + order.customer_phone + '</small>' : ''}
-                            ${order.notes ? '<br><small class="text-info"><i class="fas fa-sticky-note mr-1"></i>' + order.notes + '</small>' : ''}
-                        </div>
-                        
-                        <div class="order-items">`;
-                        
-        order.items.forEach(function(item) {
-            html += `
-                <div class="order-item">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <strong>${item.product.name}</strong>
-                        </div>
-                        <div class="col-auto">
-                            <span class="badge badge-primary">×${item.quantity}</span>
-                        </div>
-                    </div>
-                </div>`;
-        });
-        
-        html += `
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="row align-items-center">
-                            <div class="col">
-                                <strong>$${parseFloat(order.total_amount).toFixed(2)}</strong>
-                            </div>
-                            <div class="col-auto">
-                                <div class="btn-group" role="group">
-                                    ${getStatusButtons(order)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <span class="elapsed-badge badge bg-light text-muted border">
+                        <i class="bi bi-clock me-1"></i>${elapsed(order.created_at)}
+                    </span>
                 </div>
-            </div>`;
-    });
-    
-    $('#ordersContainer').html(html);
-}
-
-function getStatusButtons(order) {
-    const buttons = {
-        'pending': '<button class="btn btn-sm btn-warning" onclick="changeOrderStatus(' + order.id + ', \'confirmed\')">Confirm</button>',
-        'confirmed': '<button class="btn btn-sm btn-info" onclick="changeOrderStatus(' + order.id + ', \'preparing\')">Start</button>',
-        'preparing': '<button class="btn btn-sm btn-success" onclick="changeOrderStatus(' + order.id + ', \'ready\')">Ready</button>',
-        'ready': '<button class="btn btn-sm btn-dark" onclick="changeOrderStatus(' + order.id + ', \'delivered\')">Delivered</button>'
-    };
-    
-    return buttons[order.status] || '';
-}
-
-function getStatusClass(status) {
-    const classes = {
-        'pending': 'border-danger',
-        'confirmed': 'border-warning', 
-        'preparing': 'border-info',
-        'ready': 'border-success'
-    };
-    return classes[status] || 'border-secondary';
-}
-
-function getStatusColor(status) {
-    const colors = {
-        'pending': 'danger',
-        'confirmed': 'warning',
-        'preparing': 'info', 
-        'ready': 'success'
-    };
-    return colors[status] || 'secondary';
-}
-
-function getTimeSinceOrder(createdAt) {
-    const now = new Date();
-    const orderTime = new Date(createdAt);
-    const diffMs = now - orderTime;
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return '< 1m';
-    if (diffMins < 60) return diffMins + 'm';
-    
-    const diffHours = Math.floor(diffMins / 60);
-    return diffHours + 'h ' + (diffMins % 60) + 'm';
-}
-
-function changeOrderStatus(orderId, newStatus) {
-    $.post(`{{ url('admin/orders') }}/${orderId}/update-status`, {
-        status: newStatus,
-        _token: '{{ csrf_token() }}'
-    })
-    .done(function(response) {
-        if (response.success) {
-            loadOrders(); // Refresh the display
-            
-            // Show success notification
-            const notification = $(`
-                <div class="alert alert-success alert-dismissible fade show position-fixed" 
-                     style="top: 20px; left: 50%; transform: translateX(-50%); z-index: 1060;">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    Order status updated successfully!
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2" style="font-size:13px;">
+                        <span><i class="bi bi-grid me-1 text-muted"></i>Table ${order.table_number}</span>
+                        <span class="fw-semibold text-success">${window._currency}${parseFloat(order.total_amount).toFixed(2)}</span>
+                    </div>
+                    ${order.customer_name ? `<div class="text-muted mb-2" style="font-size:12px;"><i class="bi bi-person me-1"></i>${order.customer_name}</div>` : ''}
+                    <div class="border rounded p-2 mb-2" style="background:#fafafa;">
+                        ${itemsHtml}
+                    </div>
+                    ${order.notes ? `<div class="alert alert-warning py-1 px-2 mb-2" style="font-size:12px;"><i class="bi bi-sticky me-1"></i>${order.notes}</div>` : ''}
                 </div>
-            `);
-            $('body').append(notification);
-            setTimeout(() => notification.fadeOut(), 3000);
+                <div class="card-footer bg-white border-top d-flex gap-1">
+                    ${nextBtn}
+                    <button class="btn btn-sm btn-outline-secondary" onclick="openStatusModal(${order.id}, '${order.order_number}', '${order.status}')">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <a href="{{ url('admin/orders') }}/${order.id}" class="btn btn-sm btn-outline-secondary ms-auto">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function loadOrders() {
+    $.get('{{ route('admin.orders.live-feed') }}')
+        .done(r => renderOrders(r.orders || []))
+        .fail(() => console.warn('Failed to fetch orders'));
+}
+
+function quickUpdate(id, status) {
+    $.post(`{{ url('admin/orders') }}/${id}/update-status`, { status, _token: '{{ csrf_token() }}' })
+        .done(r => { if (r.success) loadOrders(); })
+        .fail(() => alert('Update failed'));
+}
+
+function openStatusModal(id, number, currentStatus) {
+    document.getElementById('modal-order-id').value = id;
+    document.getElementById('modal-order-number').textContent = '#' + number;
+    const btns = document.getElementById('status-buttons');
+    const statuses = ['confirmed','preparing','ready','delivered','cancelled'];
+    btns.innerHTML = statuses.filter(s => s !== currentStatus).map(s => {
+        const m = statusMeta[s] || { color:'secondary', icon:'circle', label:s };
+        return `<button class="btn btn-outline-${m.color}" onclick="quickUpdate(${id},'${s}'); bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();">
+            <i class="bi bi-${m.icon} me-1"></i>${s.charAt(0).toUpperCase()+s.slice(1)}
+        </button>`;
+    }).join('');
+    new bootstrap.Modal(document.getElementById('statusUpdateModal')).show();
+}
+
+function startCountdown() {
+    countdown = 5;
+    document.getElementById('refresh-countdown').textContent = countdown;
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+        if (!isRunning) return;
+        countdown--;
+        document.getElementById('refresh-countdown').textContent = countdown;
+        if (countdown <= 0) {
+            loadOrders();
+            countdown = 5;
         }
-    })
-    .fail(function() {
-        alert('Failed to update order status. Please try again.');
-    });
+    }, 1000);
 }
 
-function startAutoRefresh() {
-    isAutoRefreshEnabled = true;
-    autoRefreshInterval = setInterval(loadOrders, 5000); // Refresh every 5 seconds
-    
-    $('#toggleAutoRefresh')
-        .removeClass('btn-info')
-        .addClass('btn-warning')
-        .html('<i class="fas fa-pause"></i> Pause Auto-Refresh');
-        
-    $('#autoRefreshStatus')
-        .removeClass('badge-secondary')
-        .addClass('badge-success')
-        .html('<i class="fas fa-sync fa-spin"></i> Auto-refresh ON');
-}
-
-function stopAutoRefresh() {
-    isAutoRefreshEnabled = false;
-    clearInterval(autoRefreshInterval);
-    
-    $('#toggleAutoRefresh')
-        .removeClass('btn-warning')
-        .addClass('btn-info')
-        .html('<i class="fas fa-play"></i> Resume Auto-Refresh');
-        
-    $('#autoRefreshStatus')
-        .removeClass('badge-success')
-        .addClass('badge-secondary')
-        .html('<i class="fas fa-pause"></i> Auto-refresh OFF');
-}
-
-// Cleanup when leaving the page
-$(window).on('beforeunload', function() {
-    stopAutoRefresh();
+document.getElementById('toggle-refresh').addEventListener('click', function() {
+    isRunning = !isRunning;
+    const icon = document.getElementById('toggle-icon');
+    const badge = document.getElementById('auto-refresh-badge');
+    if (isRunning) {
+        icon.className = 'bi bi-pause-fill';
+        badge.className = 'badge badge-pill-success';
+        badge.innerHTML = '<i class="bi bi-broadcast me-1"></i>Live';
+    } else {
+        icon.className = 'bi bi-play-fill';
+        badge.className = 'badge badge-pill-secondary';
+        badge.innerHTML = '<i class="bi bi-pause me-1"></i>Paused';
+    }
 });
+
+loadOrders();
+startCountdown();
 </script>
 @endpush
