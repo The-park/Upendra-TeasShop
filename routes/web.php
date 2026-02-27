@@ -89,12 +89,12 @@ Route::middleware(['auth', 'verified', 'role:admin,manager'])->prefix('admin')->
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('live', [OrderController::class, 'liveDisplay'])->name('live');
         Route::get('live-feed', [OrderController::class, 'liveFeed'])->name('live-feed');
-        Route::post('{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::get('history', [OrderController::class, 'history'])->name('history');
+        Route::get('export', [OrderController::class, 'export'])->name('export');
         Route::get('{order}', [OrderController::class, 'show'])->name('show');
+        Route::post('{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('{order}/mark-paid', [OrderController::class, 'markPaid'])->name('mark-paid');
         Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-        Route::get('export', [OrderController::class, 'export'])->name('export');
     });
     
     // Settings

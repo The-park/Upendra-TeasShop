@@ -90,7 +90,7 @@
                         <td><input type="checkbox" class="form-check-input product-checkbox" value="{{ $product->id }}"></td>
                         <td>
                             <div class="d-flex align-items-center gap-3">
-                                @if($product->image)
+                                @if($product->image_path)
                                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                                          class="rounded-2" style="width:44px;height:44px;object-fit:cover;flex-shrink:0;">
                                 @else

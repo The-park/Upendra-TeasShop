@@ -193,11 +193,29 @@ class OrderController extends Controller
     public function liveFeed()
     {
         $orders = Order::with(['orderItems.product', 'table'])
-            ->whereIn('status', ['pending', 'confirmed', 'preparing'])
+            ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready'])
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id'             => $order->id,
+                    'order_number'   => $order->order_number,
+                    'status'         => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                    'total_amount'   => $order->total_amount,
+                    'customer_name'  => $order->customer_name,
+                    'notes'          => $order->customer_notes,
+                    'created_at'     => $order->created_at,
+                    'table_number'   => optional($order->table)->table_number ?? 'N/A',
+                    'items'        => $order->orderItems->map(fn($i) => [
+                        'product_name' => $i->product_name ?? optional($i->product)->name ?? 'Item',
+                        'quantity'     => $i->quantity,
+                    ]),
+                ];
+            });
 
-        return response()->json($orders);
+        return response()->json(['orders' => $orders]);
     }
 
     /**
@@ -206,7 +224,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,preparing,ready,delivered,cancelled'
+            'status' => 'required|in:pending,confirmed,preparing,ready,served,cancelled'
         ]);
 
         $order->update([
@@ -258,7 +276,7 @@ class OrderController extends Controller
      */
     public function cancel(Order $order)
     {
-        if (in_array($order->status, ['delivered', 'cancelled'])) {
+        if (in_array($order->status, ['served', 'cancelled'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order cannot be cancelled.'

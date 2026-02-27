@@ -6,8 +6,8 @@
 @endsection
 @section('content')
 @php
-$statusColors = ['pending'=>'danger','confirmed'=>'warning','preparing'=>'info','ready'=>'success','delivered'=>'primary','cancelled'=>'secondary'];
-$statusIcons  = ['pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat','ready'=>'check2-circle','delivered'=>'bag-check','cancelled'=>'x-circle'];
+$statusColors = ['pending'=>'danger','confirmed'=>'warning','preparing'=>'info','ready'=>'success','served'=>'primary','cancelled'=>'secondary'];
+$statusIcons  = ['pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat','ready'=>'check2-circle','served'=>'bag-check','cancelled'=>'x-circle'];
 $sc = $statusColors[$order->status] ?? 'secondary';
 $si = $statusIcons[$order->status] ?? 'question';
 @endphp
@@ -45,7 +45,7 @@ $si = $statusIcons[$order->status] ?? 'question';
             <div class="card-header bg-white border-bottom py-3 d-flex align-items-center">
                 <i class="bi bi-bag me-2 text-primary"></i>
                 <strong>Order Items</strong>
-                <span class="badge badge-pill-secondary ms-2">{{ $order->items->count() }}</span>
+                <span class="badge badge-pill-secondary ms-2">{{ $order->orderItems->count() }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -59,7 +59,7 @@ $si = $statusIcons[$order->status] ?? 'question';
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($order->items as $item)
+                            @foreach($order->orderItems as $item)
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
@@ -118,28 +118,28 @@ $si = $statusIcons[$order->status] ?? 'question';
             </div>
             <div class="card-body">
                 <div class="timeline">
-                    <div class="timeline-item {{ in_array($order->status, ['pending','confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['pending','confirmed','preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-danger"><i class="bi bi-clock"></i></div>
                         <div class="timeline-content">
                             <div class="fw-semibold">Order Placed</div>
                             <small class="text-muted">{{ $order->created_at->format('M j, g:i A') }}</small>
                         </div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['confirmed','preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-warning"><i class="bi bi-check-circle"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Confirmed</div></div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-info"><i class="bi bi-arrow-repeat"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Preparing</div></div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-success"><i class="bi bi-check2-circle"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Ready</div></div>
                     </div>
-                    <div class="timeline-item {{ $order->status === 'delivered' ? 'active' : '' }}">
+                    <div class="timeline-item {{ $order->status === 'served' ? 'active' : '' }}">
                         <div class="timeline-marker bg-primary"><i class="bi bi-bag-check"></i></div>
-                        <div class="timeline-content"><div class="fw-semibold">Delivered</div></div>
+                        <div class="timeline-content"><div class="fw-semibold">Served</div></div>
                     </div>
                 </div>
             </div>
@@ -165,9 +165,9 @@ $si = $statusIcons[$order->status] ?? 'question';
                 </div>
                 <div class="d-flex align-items-center gap-2 text-muted" style="font-size:13px;">
                     <i class="bi bi-grid"></i>
-                    <span>Table {{ $order->restaurantTable->table_number }}</span>
-                    @if($order->restaurantTable->location)
-                    <span class="badge badge-pill-secondary">{{ $order->restaurantTable->location }}</span>
+                    <span>Table {{ optional($order->table)->table_number ?? 'N/A' }}</span>
+                    @if(optional($order->table)->location)
+                    <span class="badge badge-pill-secondary">{{ $order->table->location }}</span>
                     @endif
                 </div>
             </div>
@@ -238,7 +238,7 @@ $si = $statusIcons[$order->status] ?? 'question';
         @endif
 
     <!-- Actions -->
-        @if($order->status !== 'delivered' && $order->status !== 'cancelled')
+        @if($order->status !== 'served' && $order->status !== 'cancelled')
         <div class="card">
             <div class="card-header bg-white border-bottom py-3">
                 <i class="bi bi-lightning me-2 text-warning"></i><strong>Quick Actions</strong>
@@ -257,8 +257,8 @@ $si = $statusIcons[$order->status] ?? 'question';
                     <i class="bi bi-check2-circle me-1"></i>Mark Ready
                 </button>
                 @elseif($order->status === 'ready')
-                <button class="btn btn-primary" onclick="updateStatus('delivered')">
-                    <i class="bi bi-bag-check me-1"></i>Mark Delivered
+                <button class="btn btn-primary" onclick="updateStatus('served')">
+                    <i class="bi bi-bag-check me-1"></i>Mark Served
                 </button>
                 @endif
                 <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">

@@ -21,7 +21,7 @@
     <div class="col-lg-4">
         <div class="card mb-3">
             <div class="card-body text-center py-4">
-                @if($product->image)
+                @if($product->image_path)
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                          class="rounded-3 img-fluid mb-3" style="max-height:220px;object-fit:cover;">
                 @else
@@ -121,7 +121,7 @@
                     <div class="col-sm-6 col-md-3">
                         <a href="{{ route('admin.products.show', $rel) }}" class="text-decoration-none">
                             <div class="card h-100 border">
-                                @if($rel->image)
+                                @if($rel->image_path)
                                     <img src="{{ $rel->image_url }}" class="card-img-top rounded-top-2"
                                          style="height:100px;object-fit:cover;" alt="{{ $rel->name }}">
                                 @else

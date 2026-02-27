@@ -201,7 +201,7 @@ class Product extends Model
     }
 
     /**
-     * Calculate profit margin
+     * Calculate profit margin percentage
      */
     public function getProfitMarginAttribute()
     {
@@ -210,5 +210,25 @@ class Product extends Model
         }
 
         return round((($this->price - $this->cost_price) / $this->price) * 100, 2);
+    }
+
+    /**
+     * Profit amount (sell price - cost price)
+     */
+    public function getProfitAmountAttribute()
+    {
+        if (! $this->cost_price || $this->cost_price == 0) {
+            return null;
+        }
+
+        return number_format($this->price - $this->cost_price, 2);
+    }
+
+    /**
+     * Profit percentage (alias for profit_margin)
+     */
+    public function getProfitPercentageAttribute()
+    {
+        return $this->profit_margin;
     }
 }

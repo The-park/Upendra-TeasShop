@@ -254,7 +254,7 @@
                                     'confirmed' => 'info', 
                                     'preparing' => 'primary',
                                     'ready' => 'success',
-                                    'delivered' => 'dark',
+                                    'served' => 'dark',
                                     'cancelled' => 'danger'
                                 ];
                                 $statusColor = $statusColors[$order->status] ?? 'secondary';
@@ -275,12 +275,12 @@
                                 </div>
                             </div>
                             
-                            <div class="timeline-item {{ in_array($order->status, ['confirmed', 'preparing', 'ready', 'delivered']) ? 'completed' : ($order->status == 'confirmed' ? 'active' : '') }}">
+                            <div class="timeline-item {{ in_array($order->status, ['confirmed', 'preparing', 'ready', 'served']) ? 'completed' : ($order->status == 'confirmed' ? 'active' : '') }}">
                                 <div class="timeline-marker"></div>
                                 <div class="timeline-content">
                                     <h6>Order Confirmed</h6>
                                     <p class="text-muted mb-0">
-                                        @if(in_array($order->status, ['confirmed', 'preparing', 'ready', 'delivered']))
+                                        @if(in_array($order->status, ['confirmed', 'preparing', 'ready', 'served']))
                                             Confirmed
                                         @elseif($order->status == 'cancelled')
                                             Cancelled
@@ -292,12 +292,12 @@
                                 </div>
                             </div>
 
-                            <div class="timeline-item {{ in_array($order->status, ['preparing', 'ready', 'delivered']) ? 'completed' : ($order->status == 'preparing' ? 'active' : '') }}">
+                            <div class="timeline-item {{ in_array($order->status, ['preparing', 'ready', 'served']) ? 'completed' : ($order->status == 'preparing' ? 'active' : '') }}">
                                 <div class="timeline-marker"></div>
                                 <div class="timeline-content">
                                     <h6>Preparing</h6>
                                     <p class="text-muted mb-0">
-                                        @if(in_array($order->status, ['preparing', 'ready', 'delivered']))
+                                        @if(in_array($order->status, ['preparing', 'ready', 'served']))
                                             In kitchen
                                         @else
                                             Waiting to start...
@@ -307,14 +307,14 @@
                                 </div>
                             </div>
 
-                            <div class="timeline-item {{ in_array($order->status, ['ready', 'delivered']) ? 'completed' : ($order->status == 'ready' ? 'active' : '') }}">
+                            <div class="timeline-item {{ in_array($order->status, ['ready', 'served']) ? 'completed' : ($order->status == 'ready' ? 'active' : '') }}">
                                 <div class="timeline-marker"></div>
                                 <div class="timeline-content">
                                     <h6>Ready for Pickup</h6>
                                     <p class="text-muted mb-0">
                                         @if($order->status == 'ready')
                                             Ready now!
-                                        @elseif($order->status == 'delivered')
+                                        @elseif($order->status == 'served')
                                             Completed
                                         @else
                                             Estimated: 10-15 minutes
@@ -324,24 +324,24 @@
                                 </div>
                             </div>
 
-                            <div class="timeline-item {{ $order->status == 'delivered' ? 'completed' : '' }}">
+                            <div class="timeline-item {{ $order->status == 'served' ? 'completed' : '' }}">
                                 <div class="timeline-marker"></div>
                                 <div class="timeline-content">
                                     <h6>Order Complete</h6>
                                     <p class="text-muted mb-0">
-                                        @if($order->status == 'delivered')
+                                        @if($order->status == 'served')
                                             Enjoy your meal!
                                         @else
-                                            Pending delivery
+                                            Pending
                                         @endif
                                     </p>
-                                    <small class="text-muted">Order delivered to table</small>
+                                    <small class="text-muted">Order served to table</small>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Estimated Time -->
-                        @if(!in_array($order->status, ['delivered', 'cancelled']))
+                        @if(!in_array($order->status, ['served', 'cancelled']))
                             <div class="estimated-time">
                                 <h6 class="text-warning mb-2">
                                     <i class="fas fa-clock me-2"></i>Estimated Time
@@ -499,7 +499,7 @@
     </div>
 
     <!-- Auto-refresh for active orders -->
-    @if(isset($order) && !in_array($order->status, ['delivered', 'cancelled']))
+    @if(isset($order) && !in_array($order->status, ['served', 'cancelled']))
         <div class="refresh-indicator" id="refreshIndicator" style="display:none;">
             <i class="fas fa-sync fa-spin me-1"></i> Refreshing...
         </div>
