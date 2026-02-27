@@ -46,6 +46,7 @@
             display: flex; flex-direction: column;
             transition: width .3s ease, transform .3s ease;
             box-shadow: 4px 0 20px rgba(0,0,0,.25);
+            overflow: hidden;
         }
         .admin-sidebar.collapsed { width: var(--sidebar-collapsed-w); }
         .admin-sidebar .sidebar-brand {
@@ -77,6 +78,25 @@
             padding: 16px 20px 6px; overflow: hidden; white-space: nowrap;
         }
         .admin-sidebar.collapsed .sidebar-section-label { visibility: hidden; }
+        /* Hide text labels and arrows when sidebar is collapsed */
+        .admin-sidebar .sidebar-brand .brand-text,
+        .admin-sidebar .nav-link > span,
+        .admin-sidebar .nav-link .nav-collapse-arrow,
+        .admin-sidebar .sidebar-user .user-info,
+        .admin-sidebar .sidebar-user > .bi-three-dots-vertical {
+            transition: opacity .2s ease, width .3s ease;
+            opacity: 1;
+        }
+        .admin-sidebar.collapsed .sidebar-brand .brand-text,
+        .admin-sidebar.collapsed .nav-link > span,
+        .admin-sidebar.collapsed .nav-link .nav-collapse-arrow,
+        .admin-sidebar.collapsed .sidebar-user .user-info,
+        .admin-sidebar.collapsed .sidebar-user > .bi-three-dots-vertical {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* Keep collapsed submenu items hidden */
+        .admin-sidebar.collapsed .sidebar-submenu { display: none !important; }
         .sidebar-nav .nav-link {
             display: flex; align-items: center; gap: 12px;
             padding: 10px 18px; color: rgba(255,255,255,.75);
