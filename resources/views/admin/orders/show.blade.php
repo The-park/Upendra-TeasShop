@@ -6,8 +6,8 @@
 @endsection
 @section('content')
 @php
-$statusColors = ['pending'=>'danger','confirmed'=>'warning','preparing'=>'info','ready'=>'success','delivered'=>'primary','cancelled'=>'secondary'];
-$statusIcons  = ['pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat','ready'=>'check2-circle','delivered'=>'bag-check','cancelled'=>'x-circle'];
+$statusColors = ['pending'=>'danger','confirmed'=>'warning','preparing'=>'info','ready'=>'success','served'=>'primary','cancelled'=>'secondary'];
+$statusIcons  = ['pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat','ready'=>'check2-circle','served'=>'bag-check','cancelled'=>'x-circle'];
 $sc = $statusColors[$order->status] ?? 'secondary';
 $si = $statusIcons[$order->status] ?? 'question';
 @endphp
@@ -45,7 +45,7 @@ $si = $statusIcons[$order->status] ?? 'question';
             <div class="card-header bg-white border-bottom py-3 d-flex align-items-center">
                 <i class="bi bi-bag me-2 text-primary"></i>
                 <strong>Order Items</strong>
-                <span class="badge badge-pill-secondary ms-2">{{ $order->items->count() }}</span>
+                <span class="badge badge-pill-secondary ms-2">{{ $order->orderItems->count() }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -59,7 +59,7 @@ $si = $statusIcons[$order->status] ?? 'question';
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($order->items as $item)
+                            @foreach($order->orderItems as $item)
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
@@ -118,28 +118,28 @@ $si = $statusIcons[$order->status] ?? 'question';
             </div>
             <div class="card-body">
                 <div class="timeline">
-                    <div class="timeline-item {{ in_array($order->status, ['pending','confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['pending','confirmed','preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-danger"><i class="bi bi-clock"></i></div>
                         <div class="timeline-content">
                             <div class="fw-semibold">Order Placed</div>
                             <small class="text-muted">{{ $order->created_at->format('M j, g:i A') }}</small>
                         </div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['confirmed','preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-warning"><i class="bi bi-check-circle"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Confirmed</div></div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['preparing','ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['preparing','ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-info"><i class="bi bi-arrow-repeat"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Preparing</div></div>
                     </div>
-                    <div class="timeline-item {{ in_array($order->status, ['ready','delivered']) ? 'active' : '' }}">
+                    <div class="timeline-item {{ in_array($order->status, ['ready','served']) ? 'active' : '' }}">
                         <div class="timeline-marker bg-success"><i class="bi bi-check2-circle"></i></div>
                         <div class="timeline-content"><div class="fw-semibold">Ready</div></div>
                     </div>
-                    <div class="timeline-item {{ $order->status === 'delivered' ? 'active' : '' }}">
+                    <div class="timeline-item {{ $order->status === 'served' ? 'active' : '' }}">
                         <div class="timeline-marker bg-primary"><i class="bi bi-bag-check"></i></div>
-                        <div class="timeline-content"><div class="fw-semibold">Delivered</div></div>
+                        <div class="timeline-content"><div class="fw-semibold">Served</div></div>
                     </div>
                 </div>
             </div>
@@ -165,9 +165,9 @@ $si = $statusIcons[$order->status] ?? 'question';
                 </div>
                 <div class="d-flex align-items-center gap-2 text-muted" style="font-size:13px;">
                     <i class="bi bi-grid"></i>
-                    <span>Table {{ $order->restaurantTable->table_number }}</span>
-                    @if($order->restaurantTable->location)
-                    <span class="badge badge-pill-secondary">{{ $order->restaurantTable->location }}</span>
+                    <span>Table {{ optional($order->table)->table_number ?? 'N/A' }}</span>
+                    @if(optional($order->table)->location)
+                    <span class="badge badge-pill-secondary">{{ $order->table->location }}</span>
                     @endif
                 </div>
             </div>
@@ -184,8 +184,18 @@ $si = $statusIcons[$order->status] ?? 'question';
                     <span>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
-                    <span class="text-muted">Payment</span>
-                    <span class="badge badge-pill-success">Pending</span>
+                    <span class="text-muted">Payment Status</span>
+                    @if($order->payment_status === 'paid')
+                        <span class="badge badge-pill-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                    @elseif($order->payment_status === 'refunded')
+                        <span class="badge badge-pill-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Refunded</span>
+                    @else
+                        <span class="badge badge-pill-danger"><i class="bi bi-clock me-1"></i>Unpaid</span>
+                    @endif
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
+                    <span class="text-muted">Payment Method</span>
+                    <span class="text-capitalize">{{ $order->payment_method ?? 'Cash' }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fw-bold">
@@ -195,8 +205,40 @@ $si = $statusIcons[$order->status] ?? 'question';
             </div>
         </div>
 
-        <!-- Actions -->
-        @if($order->status !== 'delivered' && $order->status !== 'cancelled')
+        <!-- Payment Action -->
+        @if($order->payment_status !== 'paid')
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-cash-coin me-2 text-success"></i><strong>Payment</strong>
+            </div>
+            <div class="card-body d-grid gap-2">
+                <div class="alert alert-warning mb-2 py-2" style="font-size:13px;">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    This order is <strong>unpaid</strong>. Collect
+                    <strong>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</strong>
+                    and mark as paid.
+                </div>
+                <button class="btn btn-success" onclick="markPaid()">
+                    <i class="bi bi-check-circle me-1"></i>Mark as Paid
+                </button>
+            </div>
+        </div>
+        @else
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-cash-coin me-2 text-success"></i><strong>Payment</strong>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success mb-0 py-2" style="font-size:13px;">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Payment of <strong>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</strong> received.
+                </div>
+            </div>
+        </div>
+        @endif
+
+    <!-- Actions -->
+        @if($order->status !== 'served' && $order->status !== 'cancelled')
         <div class="card">
             <div class="card-header bg-white border-bottom py-3">
                 <i class="bi bi-lightning me-2 text-warning"></i><strong>Quick Actions</strong>
@@ -215,8 +257,8 @@ $si = $statusIcons[$order->status] ?? 'question';
                     <i class="bi bi-check2-circle me-1"></i>Mark Ready
                 </button>
                 @elseif($order->status === 'ready')
-                <button class="btn btn-primary" onclick="updateStatus('delivered')">
-                    <i class="bi bi-bag-check me-1"></i>Mark Delivered
+                <button class="btn btn-primary" onclick="updateStatus('served')">
+                    <i class="bi bi-bag-check me-1"></i>Mark Served
                 </button>
                 @endif
                 <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
@@ -265,6 +307,12 @@ $si = $statusIcons[$order->status] ?? 'question';
 <script>
 function updateStatus(status) {
     $.post('{{ route('admin.orders.update-status', $order) }}', { status, _token: '{{ csrf_token() }}' })
+      .done(r => { if (r.success) location.reload(); else alert(r.message || 'Failed'); })
+      .fail(() => alert('Request failed'));
+}
+function markPaid() {
+    if (!confirm('Confirm payment of {{ $currencySymbol }}{{ number_format($order->total_amount, 2) }} received?')) return;
+    $.post('{{ route('admin.orders.mark-paid', $order) }}', { _token: '{{ csrf_token() }}' })
       .done(r => { if (r.success) location.reload(); else alert(r.message || 'Failed'); })
       .fail(() => alert('Request failed'));
 }

@@ -101,8 +101,8 @@ const statusMeta = {
     ready:     { color:'success', icon:'check2-circle', label:'Ready'     }
 };
 
-const nextStatus = { pending:'confirmed', confirmed:'preparing', preparing:'ready', ready:'delivered' };
-const nextLabel  = { pending:'? Confirm', confirmed:'?? Start Prep', preparing:'?? Mark Ready', ready:'?? Delivered' };
+const nextStatus = { pending:'confirmed', confirmed:'preparing', preparing:'ready', ready:'served' };
+const nextLabel  = { pending:'Confirm', confirmed:'Start Prep', preparing:'Mark Ready', ready:'Mark Served' };
 
 function elapsed(created_at) {
     const diff = Math.floor((Date.now() - new Date(created_at)) / 60000);
@@ -166,9 +166,18 @@ function renderOrders(orders) {
                         ${itemsHtml}
                     </div>
                     ${order.notes ? `<div class="alert alert-warning py-1 px-2 mb-2" style="font-size:12px;"><i class="bi bi-sticky me-1"></i>${order.notes}</div>` : ''}
+                    <div class="d-flex align-items-center gap-2 mb-0" style="font-size:12px;">
+                        <span class="badge ${order.payment_status === 'paid' ? 'badge-pill-success' : 'badge-pill-danger'}">
+                            <i class="bi bi-${order.payment_status === 'paid' ? 'check-circle' : 'clock'} me-1"></i>${order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                        </span>
+                        <span class="text-muted text-capitalize">${order.payment_method || 'cash'}</span>
+                    </div>
                 </div>
                 <div class="card-footer bg-white border-top d-flex gap-1">
                     ${nextBtn}
+                    ${order.payment_status !== 'paid' ? `<button class="btn btn-sm btn-outline-success" onclick="markPaid(${order.id})" title="Mark Paid">
+                        <i class="bi bi-cash-coin"></i>
+                    </button>` : ''}
                     <button class="btn btn-sm btn-outline-secondary" onclick="openStatusModal(${order.id}, '${order.order_number}', '${order.status}')">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
@@ -193,11 +202,17 @@ function quickUpdate(id, status) {
         .fail(() => alert('Update failed'));
 }
 
+function markPaid(id) {
+    $.post(`{{ url('admin/orders') }}/${id}/mark-paid`, { _token: '{{ csrf_token() }}' })
+        .done(r => { if (r.success) loadOrders(); else alert(r.message || 'Failed'); })
+        .fail(() => alert('Mark paid failed'));
+}
+
 function openStatusModal(id, number, currentStatus) {
     document.getElementById('modal-order-id').value = id;
     document.getElementById('modal-order-number').textContent = '#' + number;
     const btns = document.getElementById('status-buttons');
-    const statuses = ['confirmed','preparing','ready','delivered','cancelled'];
+    const statuses = ['confirmed','preparing','ready','served','cancelled'];
     btns.innerHTML = statuses.filter(s => s !== currentStatus).map(s => {
         const m = statusMeta[s] || { color:'secondary', icon:'circle', label:s };
         return `<button class="btn btn-outline-${m.color}" onclick="quickUpdate(${id},'${s}'); bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal')).hide();">

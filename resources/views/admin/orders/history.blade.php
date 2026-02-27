@@ -27,7 +27,7 @@
                 <label class="form-label mb-1" style="font-size:12px;font-weight:600;">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
-                    @foreach(['pending','confirmed','preparing','ready','delivered','cancelled'] as $s)
+                    @foreach(['pending','confirmed','preparing','ready','served','cancelled'] as $s)
                     <option value="{{ $s }}" {{ request('status')==$s?'selected':'' }}>{{ ucfirst($s) }}</option>
                     @endforeach
                 </select>
@@ -62,6 +62,7 @@
                         <th>Items</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Payment</th>
                         <th width="120">Actions</th>
                     </tr>
                 </thead>
@@ -73,12 +74,12 @@
                             'confirmed' => 'badge-pill-warning',
                             'preparing' => 'badge-pill-info',
                             'ready'     => 'badge-pill-success',
-                            'delivered' => 'badge-pill-primary',
+                            'served' => 'badge-pill-primary',
                             'cancelled' => 'badge-pill-secondary',
                         ];
                         $icons = [
                             'pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat',
-                            'ready'=>'check2-circle','delivered'=>'bag-check','cancelled'=>'x-circle'
+                            'ready'=>'check2-circle','served'=>'bag-check','cancelled'=>'x-circle'
                         ];
                     @endphp
                     <tr>
@@ -93,7 +94,7 @@
                         </td>
                         <td>
                             <span class="badge bg-light text-dark border">
-                                <i class="bi bi-grid me-1"></i>{{ $order->restaurantTable->table_number }}
+                                <i class="bi bi-grid me-1"></i>{{ optional($order->table)->table_number ?? 'N/A' }}
                             </span>
                         </td>
                         <td>
@@ -103,9 +104,9 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge badge-pill-secondary">{{ $order->items->count() }} items</span>
-                            @if($order->notes)
-                            <i class="bi bi-sticky-fill text-warning ms-1" title="{{ $order->notes }}"></i>
+                            <span class="badge badge-pill-secondary">{{ $order->orderItems->count() }} items</span>
+                            @if($order->customer_notes)
+                            <i class="bi bi-sticky-fill text-warning ms-1" title="{{ $order->customer_notes }}"></i>
                             @endif
                         </td>
                         <td><span class="fw-semibold text-success">{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</span></td>
@@ -113,6 +114,13 @@
                             <span class="badge {{ $sp[$order->status] ?? 'badge-pill-secondary' }}">
                                 <i class="bi bi-{{ $icons[$order->status] ?? 'question' }} me-1"></i>{{ ucfirst($order->status) }}
                             </span>
+                        </td>
+                        <td>
+                            @if($order->payment_status === 'paid')
+                                <span class="badge badge-pill-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                            @else
+                                <span class="badge badge-pill-danger"><i class="bi bi-clock me-1"></i>Unpaid</span>
+                            @endif
                         </td>
                         <td>
                             <div class="d-flex gap-1">
@@ -163,7 +171,7 @@
                     <option value="confirmed">? Confirmed</option>
                     <option value="preparing">?? Preparing</option>
                     <option value="ready">?? Ready</option>
-                    <option value="delivered">?? Delivered</option>
+                    <option value="served">Served</option>
                 </select>
             </div>
             <div class="modal-footer">

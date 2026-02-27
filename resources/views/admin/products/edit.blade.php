@@ -87,7 +87,7 @@
         <div class="card mb-3">
             <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-image me-2 text-muted"></i>Product Image</h6></div>
             <div class="card-body text-center">
-                @if($product->image)
+                @if($product->image_path)
                 <div id="image-preview-container">
                     <img id="image-preview" src="{{ $product->image_url }}" alt="{{ $product->name }}"
                          class="rounded-3 img-fluid mb-3" style="max-height:180px;object-fit:cover;">
@@ -107,7 +107,7 @@
                     <label for="image" class="d-block rounded-3 border-2 border-dashed p-4" 
                            style="cursor:pointer;border:2px dashed #ccc;background:#fafafa;">
                         <i class="bi bi-cloud-arrow-up fs-2 text-muted d-block mb-2"></i>
-                        <span class="text-muted" style="font-size:13px;">{{ $product->image ? 'Replace image' : 'Click to upload' }}</span>
+                        <span class="text-muted" style="font-size:13px;">{{ $product->image_path ? 'Replace image' : 'Click to upload' }}</span>
                     </label>
                     <input type="file" class="d-none" id="image" name="image" accept="image/*" onchange="previewImage(this)">
                 </div>

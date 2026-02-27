@@ -75,63 +75,66 @@ class OrderController extends Controller
     public function place(Request $request)
     {
         $request->validate([
-            'table_number' => 'required|exists:restaurant_tables,table_number',
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'notes' => 'nullable|string|max:500',
+            'table_number'    => 'required|exists:restaurant_tables,table_number',
+            'customer_name'   => 'required|string|max:255',
+            'customer_phone'  => 'nullable|string|max:20',
+            'notes'           => 'nullable|string|max:500',
         ]);
 
         $cart = Session::get('cart', []);
-        
+
         if (empty($cart)) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Your cart is empty.'], 422);
+            }
             return redirect()->route('menu')->with('error', 'Your cart is empty.');
         }
 
         $table = RestaurantTable::where('table_number', $request->table_number)->first();
-        
-        DB::transaction(function () use ($request, $cart, $table) {
-            // Calculate total
+
+        $order = null;
+
+        DB::transaction(function () use ($request, $cart, $table, &$order) {
             $total = 0;
             $items = [];
-            
+
             foreach ($cart as $productId => $quantity) {
                 $product = Product::find($productId);
                 if ($product) {
                     $subtotal = $product->price * $quantity;
                     $total += $subtotal;
                     $items[] = [
-                        'product' => $product,
+                        'product'  => $product,
                         'quantity' => $quantity,
-                        'price' => $product->price,
+                        'price'    => $product->price,
                         'subtotal' => $subtotal
                     ];
                 }
             }
 
-            // Create order
             $order = Order::create([
-                'order_number' => Order::generateOrderNumber(),
-                'table_id' => $table->id,
-                'customer_name' => $request->customer_name,
-                'customer_notes' => $request->notes,
-                'subtotal' => $total,
-                'total_amount' => $total,
-                'status' => 'pending',
-                'payment_status' => 'pending',
+                'order_number'    => Order::generateOrderNumber(),
+                'table_id'        => $table->id,
+                'customer_name'   => $request->customer_name,
+                'customer_notes'  => $request->notes,
+                'subtotal'        => $total,
+                'total_amount'    => $total,
+                'status'          => 'pending',
+                'payment_status'  => 'unpaid',
+                'payment_method'  => $request->payment_method ?? 'cash',
             ]);
 
-            // Create order items
             foreach ($items as $item) {
                 OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product']->id,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['price'],
-                    'total_price' => $item['subtotal'],
+                    'order_id'     => $order->id,
+                    'product_id'   => $item['product']->id,
+                    'product_name' => $item['product']->name,
+                    'quantity'     => $item['quantity'],
+                    'unit_price'   => $item['price'],
+                    'subtotal'     => $item['subtotal'],
                 ]);
             }
 
-            // Update table status if needed
             if ($table) {
                 $table->update(['status' => 'occupied']);
             }
@@ -141,7 +144,13 @@ class OrderController extends Controller
         Session::forget('selected_table_id');
         Session::forget('selected_table_number');
 
-        return redirect()->route('order.success', $order->order_number);
+        $redirectUrl = route('order.success', $order->order_number);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'redirect_url' => $redirectUrl]);
+        }
+
+        return redirect($redirectUrl);
     }
 
     /**
@@ -184,11 +193,29 @@ class OrderController extends Controller
     public function liveFeed()
     {
         $orders = Order::with(['orderItems.product', 'table'])
-            ->whereIn('status', ['pending', 'confirmed', 'preparing'])
+            ->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready'])
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id'             => $order->id,
+                    'order_number'   => $order->order_number,
+                    'status'         => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                    'total_amount'   => $order->total_amount,
+                    'customer_name'  => $order->customer_name,
+                    'notes'          => $order->customer_notes,
+                    'created_at'     => $order->created_at,
+                    'table_number'   => optional($order->table)->table_number ?? 'N/A',
+                    'items'        => $order->orderItems->map(fn($i) => [
+                        'product_name' => $i->product_name ?? optional($i->product)->name ?? 'Item',
+                        'quantity'     => $i->quantity,
+                    ]),
+                ];
+            });
 
-        return response()->json($orders);
+        return response()->json(['orders' => $orders]);
     }
 
     /**
@@ -197,7 +224,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,preparing,ready,delivered,cancelled'
+            'status' => 'required|in:pending,confirmed,preparing,ready,served,cancelled'
         ]);
 
         $order->update([
@@ -249,7 +276,7 @@ class OrderController extends Controller
      */
     public function cancel(Order $order)
     {
-        if (in_array($order->status, ['delivered', 'cancelled'])) {
+        if (in_array($order->status, ['served', 'cancelled'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order cannot be cancelled.'
@@ -262,6 +289,23 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Order cancelled successfully.'
         ]);
+    }
+
+    /**
+     * Admin: Mark order as paid
+     */
+    public function markPaid(Request $request, Order $order)
+    {
+        $order->update([
+            'payment_status' => 'paid',
+            'payment_method' => $request->input('payment_method', $order->payment_method ?? 'cash'),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Order marked as paid.']);
+        }
+
+        return back()->with('success', 'Payment recorded successfully.');
     }
 
     /**

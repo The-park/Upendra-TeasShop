@@ -72,7 +72,7 @@ class ProductController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
-            $data['image'] = $imagePath;
+            $data['image_path'] = $imagePath;
         }
 
         $product = Product::create($data);
@@ -87,8 +87,9 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $product->load(['category']);
-        return view('admin.products.show', compact('product'));
+        $product->load(['category.products']);
+        $currencySymbol = \App\Models\Setting::get('currency_symbol', '₹');
+        return view('admin.products.show', compact('product', 'currencySymbol'));
     }
 
     /**
@@ -124,12 +125,12 @@ class ProductController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
             }
             
             $imagePath = $request->file('image')->store('products', 'public');
-            $data['image'] = $imagePath;
+            $data['image_path'] = $imagePath;
         }
 
         $product->update($data);
@@ -145,8 +146,8 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         // Delete image if exists
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
         }
 
         $product->delete();
@@ -169,8 +170,8 @@ class ProductController extends Controller
         $products = Product::whereIn('id', $request->product_ids)->get();
         
         foreach ($products as $product) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
             }
         }
 
