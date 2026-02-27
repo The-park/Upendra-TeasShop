@@ -1,47 +1,74 @@
 <x-guest-layout>
+
+    <h2>Welcome back</h2>
+    <p class="auth-subtitle">Sign in to manage your tea shop</p>
+
     <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @if(session('status'))
+    <div class="auth-alert auth-alert-success">
+        <i class="bi bi-check-circle-fill" style="font-size:16px;flex-shrink:0;"></i>
+        <span>{{ session('status') }}</span>
+    </div>
+    @endif
+
+    <!-- Validation Errors -->
+    @if($errors->any())
+    <div class="auth-alert auth-alert-danger">
+        <i class="bi bi-exclamation-circle-fill" style="font-size:16px;flex-shrink:0;"></i>
+        <span>{{ $errors->first() }}</span>
+    </div>
+    @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <!-- Email -->
+        <div class="mb-4">
+            <label for="email" class="form-label">Email Address</label>
+            <div class="input-icon-wrap">
+                <i class="bi bi-envelope input-icon"></i>
+                <input id="email" type="email" name="email"
+                       class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                       value="{{ old('email') }}"
+                       required autofocus autocomplete="username"
+                       placeholder="you@example.com">
+            </div>
         </div>
 
         <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="mb-4">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-icon-wrap">
+                <i class="bi bi-lock input-icon"></i>
+                <input id="password" type="password" name="password"
+                       class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                       required autocomplete="current-password"
+                       placeholder="••••••••">
+                <button type="button" class="toggle-password" onclick="togglePwd(this)" tabindex="-1">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <!-- Remember + Forgot -->
+        <div class="d-flex align-items-center justify-content-between mb-4" style="font-size:13px;">
+            <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer;">
+                <input type="checkbox" name="remember" id="remember_me"
+                       style="width:15px;height:15px;accent-color:var(--tea-accent);">
+                <span style="color:#555;">Remember me</span>
             </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
+            @if(Route::has('password.request'))
+            <a href="{{ route('password.request') }}"
+               style="color:var(--tea-accent);text-decoration:none;font-weight:500;">
+                Forgot password?
+            </a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-auth">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
     </form>
+
 </x-guest-layout>
