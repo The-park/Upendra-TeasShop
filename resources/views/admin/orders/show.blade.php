@@ -1,394 +1,272 @@
 @extends('layouts.admin')
-
 @section('title', 'Order #' . $order->order_number)
-
+@section('breadcrumb')
+<li class="breadcrumb-item"><a href="{{ route('admin.orders.history') }}">Orders</a></li>
+<li class="breadcrumb-item active">#{{ $order->order_number }}</li>
+@endsection
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box">
-            <h4 class="page-title">Order Details</h4>
-            <ol class="breadcrumb float-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('admin.orders.history') }}">Orders</a></li>
-                <li class="breadcrumb-item active">{{ $order->order_number }}</li>
-            </ol>
-        </div>
+@php
+$statusColors = ['pending'=>'danger','confirmed'=>'warning','preparing'=>'info','ready'=>'success','delivered'=>'primary','cancelled'=>'secondary'];
+$statusIcons  = ['pending'=>'clock','confirmed'=>'check-circle','preparing'=>'arrow-repeat','ready'=>'check2-circle','delivered'=>'bag-check','cancelled'=>'x-circle'];
+$sc = $statusColors[$order->status] ?? 'secondary';
+$si = $statusIcons[$order->status] ?? 'question';
+@endphp
+
+<div class="page-header-bar">
+    <div class="page-title-group">
+        <h1 class="page-title"><i class="bi bi-receipt me-2 text-primary"></i>Order #{{ $order->order_number }}</h1>
+        <p class="page-subtitle">Placed {{ $order->created_at->diffForHumans() }} &mdash; {{ $order->created_at->format('M j, Y g:i A') }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+        <a href="{{ route('admin.orders.history') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
     </div>
 </div>
 
-<div class="row">
-    <!-- Order Summary -->
+<div class="row g-3">
+    <!-- Main Column -->
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <h5 class="mb-0">Order {{ $order->order_number }}</h5>
-                        <small class="text-muted">{{ $order->created_at->format('M j, Y \a\t g:i A') }}</small>
-                    </div>
-                    <div class="col-auto">
-                        @php
-                            $statusColors = [
-                                'pending' => 'danger',
-                                'confirmed' => 'warning', 
-                                'preparing' => 'info',
-                                'ready' => 'success',
-                                'delivered' => 'primary',
-                                'cancelled' => 'dark'
-                            ];
-                        @endphp
-                        <span class="badge badge-{{ $statusColors[$order->status] ?? 'secondary' }} badge-lg">
-                            {{ ucfirst($order->status) }}
-                        </span>
-                    </div>
+        <!-- Status Banner -->
+        <div class="card mb-3">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-{{ $sc }} bg-opacity-15" style="width:52px;height:52px;">
+                    <i class="bi bi-{{ $si }} fs-4 text-{{ $sc }}"></i>
                 </div>
+                <div>
+                    <div class="fw-bold fs-5">{{ ucfirst($order->status) }}</div>
+                    <div class="text-muted" style="font-size:13px;">Current order status</div>
+                </div>
+                <span class="badge badge-pill-{{ $sc }} ms-auto fs-6">{{ ucfirst($order->status) }}</span>
             </div>
-            <div class="card-body">
-                <!-- Customer Information -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">CUSTOMER INFORMATION</h6>
-                        <p class="mb-1"><strong>{{ $order->customer_name }}</strong></p>
-                        @if($order->customer_phone)
-                            <p class="mb-1"><i class="fas fa-phone mr-2"></i>{{ $order->customer_phone }}</p>
-                        @endif
-                        <p class="mb-0"><i class="fas fa-chair mr-2"></i>Table {{ $order->restaurantTable->table_number }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted">ORDER INFORMATION</h6>
-                        <p class="mb-1"><strong>Total:</strong> ${{ number_format($order->total_amount, 2) }}</p>
-                        <p class="mb-1"><strong>Items:</strong> {{ $order->items->sum('quantity') }}</p>
-                        <p class="mb-0"><strong>Duration:</strong> {{ $order->created_at->diffForHumans() }}</p>
-                    </div>
-                </div>
+        </div>
 
-                @if($order->notes)
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-sticky-note mr-2"></i>Special Instructions</h6>
-                        <p class="mb-0">{{ $order->notes }}</p>
-                    </div>
-                @endif
-
-                <!-- Order Items -->
-                <h6 class="text-muted">ORDER ITEMS</h6>
+        <!-- Order Items -->
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center">
+                <i class="bi bi-bag me-2 text-primary"></i>
+                <strong>Order Items</strong>
+                <span class="badge badge-pill-secondary ms-2">{{ $order->items->count() }}</span>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-borderless">
-                        <thead>
-                            <tr class="border-bottom">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                            <tr>
                                 <th>Item</th>
                                 <th class="text-center">Qty</th>
-                                <th class="text-right">Unit Price</th>
-                                <th class="text-right">Total</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($order->items as $item)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            @if($item->product->image)
-                                                <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}" 
-                                                     class="img-thumbnail mr-3" style="width: 50px; height: 50px; object-fit: cover;">
-                                            @else
-                                                <div class="bg-light d-flex align-items-center justify-content-center mr-3" 
-                                                     style="width: 50px; height: 50px; border-radius: 4px;">
-                                                    <i class="fas fa-image text-muted"></i>
-                                                </div>
-                                            @endif
-                                            <div>
-                                                <strong>{{ $item->product->name }}</strong>
-                                                @if($item->product->description)
-                                                    <br><small class="text-muted">{{ Str::limit($item->product->description, 60) }}</small>
-                                                @endif
-                                            </div>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($item->product && $item->product->image)
+                                        <img src="{{ Storage::url($item->product->image) }}"
+                                             width="40" height="40" class="rounded" style="object-fit:cover;"
+                                             alt="{{ $item->product_name }}">
+                                        @else
+                                        <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                            <i class="bi bi-cup-hot text-muted"></i>
                                         </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge badge-primary">{{ $item->quantity }}</span>
-                                    </td>
-                                    <td class="text-right">
-                                        ${{ number_format($item->unit_price, 2) }}
-                                    </td>
-                                    <td class="text-right">
-                                        <strong>${{ number_format($item->total_price, 2) }}</strong>
-                                    </td>
-                                </tr>
+                                        @endif
+                                        <div>
+                                            <div class="fw-semibold" style="font-size:14px;">{{ $item->product_name }}</div>
+                                            @if($item->special_instructions)
+                                            <small class="text-muted"><i class="bi bi-sticky me-1"></i>{{ $item->special_instructions }}</small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-pill-secondary">{{ $item->quantity }}</span>
+                                </td>
+                                <td class="text-end">{{ $currencySymbol }}{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="text-end fw-semibold">{{ $currencySymbol }}{{ number_format($item->subtotal, 2) }}</td>
+                            </tr>
                             @endforeach
                         </tbody>
-                        <tfoot>
-                            <tr class="border-top">
-                                <th colspan="3" class="text-right">Total:</th>
-                                <th class="text-right">
-                                    <h5 class="mb-0">${{ number_format($order->total_amount, 2) }}</h5>
-                                </th>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total</td>
+                                <td class="text-end fw-bold text-success fs-5">{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Order Actions & Timeline -->
-    <div class="col-lg-4">
-        <!-- Actions -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Quick Actions</h6>
+        <!-- Notes -->
+        @if($order->notes)
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-sticky me-2 text-warning"></i><strong>Customer Notes</strong>
             </div>
             <div class="card-body">
-                @if(in_array($order->status, ['pending', 'confirmed', 'preparing', 'ready']))
-                    <button type="button" class="btn btn-primary btn-block mb-2" onclick="showStatusModal()">
-                        <i class="fas fa-edit"></i> Update Status
-                    </button>
-                @endif
-                
-                @if(in_array($order->status, ['pending', 'confirmed']))
-                    <button type="button" class="btn btn-warning btn-block mb-2" onclick="cancelOrder()">
-                        <i class="fas fa-times"></i> Cancel Order
-                    </button>
-                @endif
-                
-                <button type="button" class="btn btn-info btn-block mb-2" onclick="printOrder()">
-                    <i class="fas fa-print"></i> Print Order
-                </button>
-                
-                <a href="{{ route('admin.orders.history') }}" class="btn btn-secondary btn-block">
-                    <i class="fas fa-arrow-left"></i> Back to Orders
-                </a>
+                <p class="mb-0">{{ $order->notes }}</p>
             </div>
         </div>
+        @endif
 
-        <!-- Order Timeline -->
+        <!-- Timeline -->
         <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Order Status Timeline</h6>
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-clock-history me-2 text-primary"></i><strong>Status Timeline</strong>
             </div>
             <div class="card-body">
                 <div class="timeline">
-                    <div class="timeline-item {{ $order->status == 'pending' ? 'active' : ($order->created_at ? 'completed' : '') }}">
-                        <div class="timeline-marker {{ $order->created_at ? 'bg-success' : 'bg-muted' }}"></div>
+                    <div class="timeline-item {{ in_array($order->status, ['pending','confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                        <div class="timeline-marker bg-danger"><i class="bi bi-clock"></i></div>
                         <div class="timeline-content">
-                            <h6>Order Placed</h6>
-                            <small class="text-muted">{{ $order->created_at->format('M j, Y g:i A') }}</small>
+                            <div class="fw-semibold">Order Placed</div>
+                            <small class="text-muted">{{ $order->created_at->format('M j, g:i A') }}</small>
                         </div>
                     </div>
-                    
-                    <div class="timeline-item {{ in_array($order->status, ['confirmed', 'preparing', 'ready', 'delivered']) ? 'completed' : ($order->status == 'confirmed' ? 'active' : '') }}">
-                        <div class="timeline-marker {{ in_array($order->status, ['confirmed', 'preparing', 'ready', 'delivered']) ? 'bg-success' : 'bg-muted' }}"></div>
-                        <div class="timeline-content">
-                            <h6>Order Confirmed</h6>
-                            <small class="text-muted">{{ in_array($order->status, ['confirmed', 'preparing', 'ready', 'delivered']) ? 'In progress' : 'Pending' }}</small>
-                        </div>
+                    <div class="timeline-item {{ in_array($order->status, ['confirmed','preparing','ready','delivered']) ? 'active' : '' }}">
+                        <div class="timeline-marker bg-warning"><i class="bi bi-check-circle"></i></div>
+                        <div class="timeline-content"><div class="fw-semibold">Confirmed</div></div>
                     </div>
-                    
-                    <div class="timeline-item {{ in_array($order->status, ['preparing', 'ready', 'delivered']) ? 'completed' : ($order->status == 'preparing' ? 'active' : '') }}">
-                        <div class="timeline-marker {{ in_array($order->status, ['preparing', 'ready', 'delivered']) ? 'bg-success' : 'bg-muted' }}"></div>
-                        <div class="timeline-content">
-                            <h6>Preparing</h6>
-                            <small class="text-muted">{{ in_array($order->status, ['preparing', 'ready', 'delivered']) ? 'In progress' : 'Pending' }}</small>
-                        </div>
+                    <div class="timeline-item {{ in_array($order->status, ['preparing','ready','delivered']) ? 'active' : '' }}">
+                        <div class="timeline-marker bg-info"><i class="bi bi-arrow-repeat"></i></div>
+                        <div class="timeline-content"><div class="fw-semibold">Preparing</div></div>
                     </div>
-                    
-                    <div class="timeline-item {{ in_array($order->status, ['ready', 'delivered']) ? 'completed' : ($order->status == 'ready' ? 'active' : '') }}">
-                        <div class="timeline-marker {{ in_array($order->status, ['ready', 'delivered']) ? 'bg-success' : 'bg-muted' }}"></div>
-                        <div class="timeline-content">
-                            <h6>Ready for Pickup</h6>
-                            <small class="text-muted">{{ in_array($order->status, ['ready', 'delivered']) ? 'Ready' : 'Pending' }}</small>
-                        </div>
+                    <div class="timeline-item {{ in_array($order->status, ['ready','delivered']) ? 'active' : '' }}">
+                        <div class="timeline-marker bg-success"><i class="bi bi-check2-circle"></i></div>
+                        <div class="timeline-content"><div class="fw-semibold">Ready</div></div>
                     </div>
-                    
-                    <div class="timeline-item {{ $order->status == 'delivered' ? 'completed' : ($order->status == 'delivered' ? 'active' : '') }}">
-                        <div class="timeline-marker {{ $order->status == 'delivered' ? 'bg-success' : 'bg-muted' }}"></div>
-                        <div class="timeline-content">
-                            <h6>Delivered</h6>
-                            <small class="text-muted">{{ $order->status == 'delivered' ? 'Completed' : 'Pending' }}</small>
-                        </div>
+                    <div class="timeline-item {{ $order->status === 'delivered' ? 'active' : '' }}">
+                        <div class="timeline-marker bg-primary"><i class="bi bi-bag-check"></i></div>
+                        <div class="timeline-content"><div class="fw-semibold">Delivered</div></div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Order Stats -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Order Statistics</h6>
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Customer Info -->
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-person me-2 text-primary"></i><strong>Customer</strong>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <h4 class="text-primary mb-1">{{ $order->items->sum('quantity') }}</h4>
-                        <small class="text-muted">Total Items</small>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-tea-pale d-flex align-items-center justify-content-center fw-bold text-tea-dark" style="width:44px;height:44px;background:var(--tea-pale);color:var(--tea-dark);">
+                        {{ strtoupper(substr($order->customer_name, 0, 1)) }}
                     </div>
-                    <div class="col-6">
-                        <h4 class="text-success mb-1">${{ number_format($order->total_amount, 2) }}</h4>
-                        <small class="text-muted">Total Value</small>
+                    <div>
+                        <div class="fw-semibold">{{ $order->customer_name }}</div>
+                        @if($order->customer_phone)<small class="text-muted">{{ $order->customer_phone }}</small>@endif
                     </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 text-muted" style="font-size:13px;">
+                    <i class="bi bi-grid"></i>
+                    <span>Table {{ $order->restaurantTable->table_number }}</span>
+                    @if($order->restaurantTable->location)
+                    <span class="badge badge-pill-secondary">{{ $order->restaurantTable->location }}</span>
+                    @endif
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update Order Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Summary -->
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-calculator me-2 text-primary"></i><strong>Summary</strong>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="newStatus">New Status:</label>
-                    <select class="form-control" id="newStatus">
-                        <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="confirmed" {{ $order->status == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                        <option value="preparing" {{ $order->status == 'preparing' ? 'selected' : '' }}>Preparing</option>
-                        <option value="ready" {{ $order->status == 'ready' ? 'selected' : '' }}>Ready</option>
-                        <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                    </select>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
+                    <span class="text-muted">Items Total</span>
+                    <span>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
+                    <span class="text-muted">Payment</span>
+                    <span class="badge badge-pill-success">Pending</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Grand Total</span>
+                    <span class="text-success fs-5">{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="updateStatus()">Update Status</button>
+        </div>
+
+        <!-- Actions -->
+        @if($order->status !== 'delivered' && $order->status !== 'cancelled')
+        <div class="card">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-lightning me-2 text-warning"></i><strong>Quick Actions</strong>
+            </div>
+            <div class="card-body d-grid gap-2">
+                @if($order->status === 'pending')
+                <button class="btn btn-success" onclick="updateStatus('confirmed')">
+                    <i class="bi bi-check-circle me-1"></i>Confirm Order
+                </button>
+                @elseif($order->status === 'confirmed')
+                <button class="btn btn-info text-white" onclick="updateStatus('preparing')">
+                    <i class="bi bi-arrow-repeat me-1"></i>Start Preparing
+                </button>
+                @elseif($order->status === 'preparing')
+                <button class="btn btn-success" onclick="updateStatus('ready')">
+                    <i class="bi bi-check2-circle me-1"></i>Mark Ready
+                </button>
+                @elseif($order->status === 'ready')
+                <button class="btn btn-primary" onclick="updateStatus('delivered')">
+                    <i class="bi bi-bag-check me-1"></i>Mark Delivered
+                </button>
+                @endif
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel Order
+                </button>
             </div>
         </div>
+        @endif
     </div>
 </div>
 
-<!-- Cancel Confirmation Modal -->
-<div class="modal fade" id="cancelModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cancel Order</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Cancel Order</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to cancel order <strong>{{ $order->order_number }}</strong>?</p>
-                <p class="text-danger">This action cannot be undone.</p>
+                <p>Are you sure you want to cancel order <strong>#{{ $order->order_number }}</strong>? This cannot be undone.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Order</button>
-                <button type="button" class="btn btn-danger" onclick="confirmCancel()">Yes, Cancel Order</button>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
+                <form action="{{ route('admin.orders.cancel', $order) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Cancel Order</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
 @push('styles')
 <style>
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline-item {
-    position: relative;
-    padding-bottom: 20px;
-}
-
-.timeline-item:not(:last-child):before {
-    content: '';
-    position: absolute;
-    left: -23px;
-    top: 25px;
-    height: calc(100% - 10px);
-    width: 2px;
-    background-color: #e9ecef;
-}
-
-.timeline-item.completed:not(:last-child):before {
-    background-color: #28a745;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -30px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-}
-
-.timeline-content h6 {
-    margin-bottom: 5px;
-    font-size: 14px;
-}
-
-.timeline-item.completed .timeline-content h6 {
-    color: #28a745;
-}
-
-.timeline-item.active .timeline-content h6 {
-    color: #007bff;
-    font-weight: bold;
-}
-
-.badge-lg {
-    font-size: 14px;
-    padding: 8px 12px;
-}
+.timeline { position: relative; padding-left: 40px; }
+.timeline::before { content:''; position:absolute; left:15px; top:0; bottom:0; width:2px; background: #dee2e6; }
+.timeline-item { position: relative; margin-bottom: 1.2rem; opacity: .4; }
+.timeline-item.active { opacity: 1; }
+.timeline-marker { position:absolute; left:-32px; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; }
+.timeline-content { padding-left: 8px; }
+@media print { .admin-sidebar, .admin-topbar, .card.mb-3:last-child, .col-lg-4 .card:last-child { display:none!important; } }
 </style>
 @endpush
-
 @push('scripts')
 <script>
-function showStatusModal() {
-    $('#statusModal').modal('show');
-}
-
-function updateStatus() {
-    const newStatus = $('#newStatus').val();
-    
-    $.post('{{ route("admin.orders.update-status", $order) }}', {
-        status: newStatus,
-        _token: '{{ csrf_token() }}'
-    })
-    .done(function(response) {
-        if (response.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + response.message);
-        }
-    })
-    .fail(function() {
-        alert('Failed to update status. Please try again.');
-    })
-    .always(function() {
-        $('#statusModal').modal('hide');
-    });
-}
-
-function cancelOrder() {
-    $('#cancelModal').modal('show');
-}
-
-function confirmCancel() {
-    $.post('{{ route("admin.orders.cancel", $order) }}', {
-        _token: '{{ csrf_token() }}'
-    })
-    .done(function(response) {
-        if (response.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + response.message);
-        }
-    })
-    .fail(function() {
-        alert('Failed to cancel order. Please try again.');
-    })
-    .always(function() {
-        $('#cancelModal').modal('hide');
-    });
-}
-
-function printOrder() {
-    window.print();
+function updateStatus(status) {
+    $.post('{{ route('admin.orders.update-status', $order) }}', { status, _token: '{{ csrf_token() }}' })
+      .done(r => { if (r.success) location.reload(); else alert(r.message || 'Failed'); })
+      .fail(() => alert('Request failed'));
 }
 </script>
 @endpush

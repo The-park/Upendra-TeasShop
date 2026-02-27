@@ -1,126 +1,100 @@
 @extends('layouts.admin')
-
-@section('title', 'Add New Category')
-
+@section('title', 'New Category')
+@section('breadcrumb')
+<li class="breadcrumb-item"><a href="{{ route('admin.categories.index') }}">Categories</a></li>
+<li class="breadcrumb-item active">New</li>
+@endsection
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box">
-            <h4 class="page-title">Add New Category</h4>
-            <ol class="breadcrumb float-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('admin.categories.index') }}">Categories</a></li>
-                <li class="breadcrumb-item active">Add New</li>
-            </ol>
-        </div>
+<div class="page-header-bar">
+    <div class="page-title-group">
+        <h1 class="page-title"><i class="bi bi-tags me-2 text-success"></i>New Category</h1>
+        <p class="page-subtitle">Add a new menu category</p>
     </div>
+    <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
 </div>
 
-<div class="row">
-    <div class="col-lg-8 offset-lg-2">
+<div class="row g-4">
+    <div class="col-lg-7">
         <div class="card">
+            <div class="card-header"><h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-muted"></i>Category Details</h6></div>
             <div class="card-body">
-                <h4 class="header-title">Category Information</h4>
-                
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('admin.categories.store') }}">
                     @csrf
-                    
-                    <div class="form-group">
-                        <label for="name" class="control-label">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" 
-                               value="{{ old('name') }}" required maxlength="255" 
-                               placeholder="Enter category name">
-                        <small class="form-text text-muted">This name will appear on your menu and admin panel.</small>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror"
+                               id="name" name="name" value="{{ old('name') }}" required maxlength="255"
+                               placeholder="e.g. Hot Teas, Cold Brews…">
+                        @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Shown on your menu and admin panel.</div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="description" class="control-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="4" maxlength="1000" 
-                                  placeholder="Enter category description (optional)">{{ old('description') }}</textarea>
-                        <small class="form-text text-muted">A brief description of this category. Maximum 1000 characters.</small>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description"
+                                  rows="3" maxlength="1000"
+                                  placeholder="Brief description for customers (optional)">{{ old('description') }}</textarea>
+                        <div class="form-text">Max 1000 characters.</div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="sort_order" class="control-label">Sort Order</label>
-                        <input type="number" class="form-control" id="sort_order" name="sort_order" 
-                               value="{{ old('sort_order', 0) }}" min="0" 
-                               placeholder="0">
-                        <small class="form-text text-muted">Lower numbers appear first. You can drag to reorder later.</small>
+                    <div class="mb-3">
+                        <label for="sort_order" class="form-label">Sort Order</label>
+                        <input type="number" class="form-control" id="sort_order" name="sort_order"
+                               value="{{ old('sort_order', 0) }}" min="0" style="max-width:140px;">
+                        <div class="form-text">Lower numbers appear first in menu. Drag-to-reorder available later.</div>
                     </div>
 
-                    <div class="form-group">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="is_active" 
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_active"
                                    name="is_active" value="1" {{ old('is_active', '1') ? 'checked' : '' }}>
-                            <label class="custom-control-label" for="is_active">
-                                <strong>Active</strong>
-                            </label>
+                            <label class="form-check-label fw-semibold" for="is_active">Active</label>
                         </div>
-                        <small class="form-text text-muted">Only active categories are visible to customers.</small>
+                        <div class="form-text">Only active categories are visible to customers.</div>
                     </div>
 
-                    <!-- Preview Section -->
-                    <div class="card bg-light mt-4">
-                        <div class="card-header">
-                            <h6 class="mb-0">Preview</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="mr-3">
-                                    <i class="fas fa-tags fa-2x text-muted"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1" id="preview-name">Category Name</h5>
-                                    <p class="text-muted mb-0" id="preview-description">Category description will appear here</p>
-                                </div>
-                                <div class="ml-auto">
-                                    <span class="badge badge-success" id="preview-status">Active</span>
-                                    <small class="text-muted ml-2">Order: <span id="preview-order">0</span></small>
-                                </div>
+                    <!-- Live Preview -->
+                    <div class="rounded-3 border p-3 mb-4" style="background:#f7fbf7;">
+                        <div class="fw-semibold text-muted mb-2" style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;">Live Preview</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center"
+                                 style="width:44px;height:44px;background:#e8f5e2;">
+                                <i class="bi bi-tags fs-4 text-success"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" id="preview-name" style="font-size:15px;">Category Name</div>
+                                <div class="text-muted" id="preview-description" style="font-size:13px;">Description here</div>
+                            </div>
+                            <div class="text-end">
+                                <span id="preview-status" class="badge badge-pill-success">Active</span>
+                                <div class="text-muted mt-1" style="font-size:11px;">Order: <span id="preview-order">0</span></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="form-group mt-4">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Save Category
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-tea">
+                            <i class="bi bi-check-lg me-1"></i>Save Category
                         </button>
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-secondary ml-2">
-                            <i class="fas fa-arrow-left"></i> Back to Categories
-                        </a>
+                        <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Tips Card -->
-<div class="row mt-4">
-    <div class="col-lg-8 offset-lg-2">
-        <div class="card border-info">
-            <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="fas fa-lightbulb mr-2"></i>Tips for Creating Categories</h6>
-            </div>
+    <div class="col-lg-5">
+        <div class="card border-0" style="background:linear-gradient(135deg,#e8f5e2,#d4edda);">
             <div class="card-body">
-                <ul class="mb-0">
-                    <li><strong>Keep names short and clear</strong> - Customers should instantly understand what's in this category</li>
-                    <li><strong>Use logical groupings</strong> - Group similar products together (e.g., "Hot Drinks", "Cold Drinks")</li>
-                    <li><strong>Consider menu flow</strong> - Order categories by popularity or logical progression</li>
-                    <li><strong>Add descriptions</strong> - Help customers understand what to expect in each category</li>
-                    <li><strong>Start with active</strong> - You can always deactivate categories later if needed</li>
+                <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Tips</h6>
+                <ul class="mb-0" style="font-size:13px;line-height:1.8;">
+                    <li><strong>Keep names short</strong> — customers should instantly understand</li>
+                    <li><strong>Use logical groupings</strong> — "Hot Drinks", "Cold Beverages"</li>
+                    <li><strong>Consider menu flow</strong> — order by popularity</li>
+                    <li><strong>Add a description</strong> — helps customers choose</li>
+                    <li><strong>Start active</strong> — deactivate later if needed</li>
                 </ul>
             </div>
         </div>
@@ -130,40 +104,21 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Real-time preview updates
-    function updatePreview() {
-        const name = $('#name').val() || 'Category Name';
-        const description = $('#description').val() || 'Category description will appear here';
-        const isActive = $('#is_active').is(':checked');
-        const sortOrder = $('#sort_order').val() || '0';
-
-        $('#preview-name').text(name);
-        $('#preview-description').text(description);
-        $('#preview-status')
-            .removeClass('badge-success badge-secondary')
-            .addClass(isActive ? 'badge-success' : 'badge-secondary')
-            .text(isActive ? 'Active' : 'Inactive');
-        $('#preview-order').text(sortOrder);
+(function () {
+    const name = document.getElementById('name');
+    const desc = document.getElementById('description');
+    const sort = document.getElementById('sort_order');
+    const active = document.getElementById('is_active');
+    function update() {
+        document.getElementById('preview-name').textContent = name.value || 'Category Name';
+        document.getElementById('preview-description').textContent = desc.value || 'Description here';
+        document.getElementById('preview-order').textContent = sort.value || '0';
+        const el = document.getElementById('preview-status');
+        if (active.checked) { el.className='badge badge-pill-success'; el.textContent='Active'; }
+        else { el.className='badge badge-pill-secondary'; el.textContent='Inactive'; }
     }
-
-    // Bind events for real-time preview
-    $('#name, #description, #sort_order').on('input', updatePreview);
-    $('#is_active').on('change', updatePreview);
-
-    // Initial preview update
-    updatePreview();
-
-    // Form validation
-    $('form').on('submit', function(e) {
-        const name = $('#name').val().trim();
-        if (name.length < 2) {
-            e.preventDefault();
-            alert('Category name must be at least 2 characters long.');
-            $('#name').focus();
-            return false;
-        }
-    });
-});
+    [name,desc,sort].forEach(el => el.addEventListener('input', update));
+    active.addEventListener('change', update);
+})();
 </script>
 @endpush
