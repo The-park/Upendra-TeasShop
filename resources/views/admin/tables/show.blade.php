@@ -24,11 +24,11 @@
                 <i class="bi bi-qr-code me-2 text-primary"></i><strong>QR Code</strong>
             </div>
             <div class="card-body text-center py-4">
-                @if($table->qr_code)
-                <img src="{{ asset('storage/'.$table->qr_code) }}" alt="QR Code" class="img-fluid mb-3" style="max-width:200px;">
+                @if($table->qr_code_path)
+                <img src="{{ asset('storage/'.$table->qr_code_path) }}" alt="QR Code" class="img-fluid mb-3" style="max-width:200px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);">
                 <p class="text-muted mb-3" style="font-size:13px;">Customers scan this to view the menu</p>
                 <div class="d-grid gap-2">
-                    <a href="{{ asset('storage/'.$table->qr_code) }}" download class="btn btn-outline-primary btn-sm">
+                    <a href="{{ asset('storage/'.$table->qr_code_path) }}" download="Table-{{ $table->table_number }}-QR.png" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-download me-1"></i>Download QR
                     </a>
                     <form action="{{ route('admin.tables.generate-qr', $table) }}" method="POST">

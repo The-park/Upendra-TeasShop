@@ -184,8 +184,18 @@ $si = $statusIcons[$order->status] ?? 'question';
                     <span>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
-                    <span class="text-muted">Payment</span>
-                    <span class="badge badge-pill-success">Pending</span>
+                    <span class="text-muted">Payment Status</span>
+                    @if($order->payment_status === 'paid')
+                        <span class="badge badge-pill-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                    @elseif($order->payment_status === 'refunded')
+                        <span class="badge badge-pill-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Refunded</span>
+                    @else
+                        <span class="badge badge-pill-danger"><i class="bi bi-clock me-1"></i>Unpaid</span>
+                    @endif
+                </div>
+                <div class="d-flex justify-content-between mb-2" style="font-size:14px;">
+                    <span class="text-muted">Payment Method</span>
+                    <span class="text-capitalize">{{ $order->payment_method ?? 'Cash' }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fw-bold">
@@ -195,7 +205,39 @@ $si = $statusIcons[$order->status] ?? 'question';
             </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Payment Action -->
+        @if($order->payment_status !== 'paid')
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-cash-coin me-2 text-success"></i><strong>Payment</strong>
+            </div>
+            <div class="card-body d-grid gap-2">
+                <div class="alert alert-warning mb-2 py-2" style="font-size:13px;">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    This order is <strong>unpaid</strong>. Collect
+                    <strong>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</strong>
+                    and mark as paid.
+                </div>
+                <button class="btn btn-success" onclick="markPaid()">
+                    <i class="bi bi-check-circle me-1"></i>Mark as Paid
+                </button>
+            </div>
+        </div>
+        @else
+        <div class="card mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <i class="bi bi-cash-coin me-2 text-success"></i><strong>Payment</strong>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success mb-0 py-2" style="font-size:13px;">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Payment of <strong>{{ $currencySymbol }}{{ number_format($order->total_amount, 2) }}</strong> received.
+                </div>
+            </div>
+        </div>
+        @endif
+
+    <!-- Actions -->
         @if($order->status !== 'delivered' && $order->status !== 'cancelled')
         <div class="card">
             <div class="card-header bg-white border-bottom py-3">
@@ -265,6 +307,12 @@ $si = $statusIcons[$order->status] ?? 'question';
 <script>
 function updateStatus(status) {
     $.post('{{ route('admin.orders.update-status', $order) }}', { status, _token: '{{ csrf_token() }}' })
+      .done(r => { if (r.success) location.reload(); else alert(r.message || 'Failed'); })
+      .fail(() => alert('Request failed'));
+}
+function markPaid() {
+    if (!confirm('Confirm payment of {{ $currencySymbol }}{{ number_format($order->total_amount, 2) }} received?')) return;
+    $.post('{{ route('admin.orders.mark-paid', $order) }}', { _token: '{{ csrf_token() }}' })
       .done(r => { if (r.success) location.reload(); else alert(r.message || 'Failed'); })
       .fail(() => alert('Request failed'));
 }

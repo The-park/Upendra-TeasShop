@@ -57,7 +57,8 @@ class RestaurantTableController extends Controller
      */
     public function show(RestaurantTable $table)
     {
-        return view('admin.tables.show', compact('table'));
+        $orders = $table->orders()->latest()->take(10)->get();
+        return view('admin.tables.show', compact('table', 'orders'));
     }
 
     /**

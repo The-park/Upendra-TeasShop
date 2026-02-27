@@ -41,6 +41,7 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('update', [CartController::class, 'update'])->name('update');
     Route::post('remove', [CartController::class, 'remove'])->name('remove');
     Route::post('clear', [CartController::class, 'clear'])->name('clear');
+    Route::post('sync', [CartController::class, 'sync'])->name('sync');
     Route::get('/', [CartController::class, 'index'])->name('index');
 });
 
@@ -91,6 +92,7 @@ Route::middleware(['auth', 'verified', 'role:admin,manager'])->prefix('admin')->
         Route::post('{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::get('history', [OrderController::class, 'history'])->name('history');
         Route::get('{order}', [OrderController::class, 'show'])->name('show');
+        Route::post('{order}/mark-paid', [OrderController::class, 'markPaid'])->name('mark-paid');
         Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
         Route::get('export', [OrderController::class, 'export'])->name('export');
     });

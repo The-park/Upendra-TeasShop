@@ -129,4 +129,35 @@ class CartController extends Controller
             'cart_count' => 0
         ]);
     }
+
+    /**
+     * Sync full cart from JS (menu page) into Laravel session.
+     * Expects JSON body: { "cart": { "productId": {qty, price, name, ...} } }
+     */
+    public function sync(Request $request)
+    {
+        $request->validate([
+            'cart' => 'required|array',
+        ]);
+
+        $incoming = $request->input('cart', []);
+        $sessionCart = [];
+
+        foreach ($incoming as $productId => $item) {
+            $product = Product::find($productId);
+            if ($product && $product->is_available) {
+                $qty = isset($item['qty']) ? (int) $item['qty'] : (int) $item;
+                if ($qty > 0) {
+                    $sessionCart[(string) $productId] = $qty;
+                }
+            }
+        }
+
+        Session::put('cart', $sessionCart);
+
+        return response()->json([
+            'success'    => true,
+            'cart_count' => array_sum($sessionCart),
+        ]);
+    }
 }

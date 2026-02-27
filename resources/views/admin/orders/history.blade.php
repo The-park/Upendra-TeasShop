@@ -62,6 +62,7 @@
                         <th>Items</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Payment</th>
                         <th width="120">Actions</th>
                     </tr>
                 </thead>
@@ -113,6 +114,13 @@
                             <span class="badge {{ $sp[$order->status] ?? 'badge-pill-secondary' }}">
                                 <i class="bi bi-{{ $icons[$order->status] ?? 'question' }} me-1"></i>{{ ucfirst($order->status) }}
                             </span>
+                        </td>
+                        <td>
+                            @if($order->payment_status === 'paid')
+                                <span class="badge badge-pill-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                            @else
+                                <span class="badge badge-pill-danger"><i class="bi bi-clock me-1"></i>Unpaid</span>
+                            @endif
                         </td>
                         <td>
                             <div class="d-flex gap-1">

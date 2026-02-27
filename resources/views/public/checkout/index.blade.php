@@ -254,8 +254,14 @@
                     
                     <!-- Table Information -->
                     <div class="table-info">
-                        <h5 class="mb-0">Table {{ session('table_number', '?') }}</h5>
-                        <small>Your selected table</small>
+                        @php $tableNum = session('selected_table_number') ?? session('table_number'); @endphp
+                        @if($tableNum)
+                            <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Table {{ $tableNum }}</h5>
+                            <small>Your selected table</small>
+                        @else
+                            <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>No table selected</h5>
+                            <small><a href="{{ route('menu') }}" class="text-white">Go back and select a table</a></small>
+                        @endif
                     </div>
                     
                     <!-- Order Items -->
@@ -424,6 +430,29 @@
             <p class="text-muted mb-0">Please don't close this page</p>
         </div>
     </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;backdrop-filter:blur(3px);transition:opacity .2s;"></div>
+    <div id="customAlertModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-52%);z-index:9999;width:90%;max-width:420px;animation:alertPop .25s cubic-bezier(.4,0,.2,1);">
+        <div style="background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden;font-family:'Segoe UI',sans-serif;">
+            <div id="alertModalHeader" style="padding:22px 24px 0;display:flex;align-items:flex-start;gap:14px;">
+                <div id="alertModalIcon" style="width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;"></div>
+                <div style="flex:1;">
+                    <div id="alertModalTitle" style="font-size:16px;font-weight:700;color:#1a2e1a;margin-bottom:4px;"></div>
+                    <div id="alertModalMessage" style="font-size:14px;color:#666;line-height:1.5;"></div>
+                </div>
+            </div>
+            <div style="padding:20px 24px 22px;display:flex;justify-content:flex-end;">
+                <button onclick="closeCustomAlert()" id="alertModalBtn"
+                    style="padding:10px 28px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .18s;">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes alertPop { from { transform:translate(-50%,-48%); opacity:0; } to { transform:translate(-50%,-52%); opacity:1; } }
+    </style>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -432,6 +461,16 @@
     
     <script>
         let cart = JSON.parse(localStorage.getItem('teashop_cart') || '[]');
+        // Normalise: if cart is an object (old menu format) convert to array
+        if (!Array.isArray(cart)) {
+            cart = Object.keys(cart).map(id => ({
+                id: parseInt(id),
+                name: cart[id].name,
+                price: cart[id].price,
+                quantity: cart[id].qty || cart[id].quantity || 1,
+                image: cart[id].image || ''
+            }));
+        }
         let selectedPayment = null;
         
         $(document).ready(function() {
@@ -536,19 +575,44 @@
             }
         }
         
+        /* ── Custom Alert ─────────────────────────────────────────── */
+        function showAlert(message, type = 'warning', title = null) {
+            const configs = {
+                warning: { icon: '⚠️', bg: '#fff8e1', iconBg: '#fff3cd', btnBg: '#f0ad4e', btnColor: '#fff', defaultTitle: 'Please Note' },
+                error:   { icon: '✕',  bg: '#fff5f5', iconBg: '#ffd5d5', btnBg: '#e53935', btnColor: '#fff', defaultTitle: 'Error' },
+                success: { icon: '✓',  bg: '#f0fff4', iconBg: '#d4edda', btnBg: '#4a8c3f', btnColor: '#fff', defaultTitle: 'Success' },
+                info:    { icon: 'ℹ',  bg: '#f0f8ff', iconBg: '#cce5ff', btnBg: '#2d5a27', btnColor: '#fff', defaultTitle: 'Info' },
+            };
+            const c = configs[type] || configs.warning;
+            document.getElementById('customAlertModal').style.background = c.bg;
+            document.getElementById('alertModalIcon').style.background = c.iconBg;
+            document.getElementById('alertModalIcon').textContent = c.icon;
+            document.getElementById('alertModalTitle').textContent = title || c.defaultTitle;
+            document.getElementById('alertModalMessage').textContent = message;
+            const btn = document.getElementById('alertModalBtn');
+            btn.style.background = c.btnBg; btn.style.color = c.btnColor;
+            document.getElementById('customAlertBackdrop').style.display = 'block';
+            document.getElementById('customAlertModal').style.display  = 'block';
+        }
+        function closeCustomAlert() {
+            document.getElementById('customAlertBackdrop').style.display = 'none';
+            document.getElementById('customAlertModal').style.display  = 'none';
+        }
+        /* ────────────────────────────────────────────────────────────── */
+
         function validateAndNext(step) {
             const name = $('#customerName').val().trim();
             const phone = $('#customerPhone').val().trim();
             
             if (!name || !phone) {
-                alert('Please fill in all required fields (Name and Phone)');
+                showAlert('Please fill in your full name and phone number to continue.', 'warning', 'Required Fields');
                 return;
             }
             
             // Validate phone number (basic)
             const phoneRegex = /^[\d\s\-\(\)\+]+$/;
             if (!phoneRegex.test(phone)) {
-                alert('Please enter a valid phone number');
+                showAlert('Please enter a valid phone number (digits, spaces, + and - only).', 'warning', 'Invalid Phone Number');
                 return;
             }
             
@@ -577,36 +641,33 @@
             const phone = $('#customerPhone').val().trim();
             
             if (!name || !phone) {
-                alert('Please complete all required customer information');
+                showAlert('Please go back and complete your name and phone number.', 'warning', 'Missing Information');
                 previousStep(2);
                 return;
             }
             
             if (!selectedPayment) {
-                alert('Please select a payment method');
+                showAlert('Please choose a payment method before placing your order.', 'warning', 'Payment Required');
                 return;
             }
             
-            if (cart.length === 0) {
-                alert('Your cart is empty');
+            if (!cart || cart.length === 0) {
+                showAlert('Your cart is empty. Please add items from the menu first.', 'error', 'Empty Cart');
                 return;
             }
             
             // Show loading
             $('#loadingOverlay').show();
             
-            // Prepare order data
+            // Prepare order data — send flat fields that OrderController::place() validates
             const orderData = {
-                cart: cart,
-                customer: {
-                    name: name,
-                    phone: phone,
-                    email: $('#customerEmail').val().trim(),
-                    notes: $('#orderNotes').val().trim()
-                },
-                payment_method: selectedPayment,
-                table_number: {{ session('table_number', 'null') }},
-                _token: '{{ csrf_token() }}'
+                customer_name:   name,
+                customer_phone:  phone,
+                customer_email:  $('#customerEmail').val().trim(),
+                notes:           $('#orderNotes').val().trim(),
+                payment_method:  selectedPayment,
+                table_number:    '{{ session('selected_table_number', '') }}',
+                _token:          '{{ csrf_token() }}'
             };
             
             // Submit order
@@ -621,12 +682,13 @@
                         // Redirect to success page
                         window.location.href = response.redirect_url;
                     } else {
-                        alert('Error: ' + (response.message || 'Failed to place order'));
+                        showAlert(response.message || 'Failed to place order. Please try again.', 'error', 'Order Failed');
                     }
                 })
                 .fail(function(xhr) {
                     console.error('Order submission failed:', xhr);
-                    alert('Failed to place order. Please try again.');
+                    const msg = xhr.responseJSON?.message || xhr.responseJSON?.errors?.table_number?.[0] || 'Something went wrong. Please try again.';
+                    showAlert(msg, 'error', 'Order Failed');
                 })
                 .always(function() {
                     $('#loadingOverlay').hide();
