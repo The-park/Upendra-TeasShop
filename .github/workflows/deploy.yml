@@ -19,7 +19,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          cd /home/byteperday/public_html
+          cd /home/byteperday/teashop.byteperday.com
           git pull origin main
           composer install
           php artisan migrate
