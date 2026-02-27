@@ -116,9 +116,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Update Order Status</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="updateOrderForm">
@@ -136,7 +134,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmUpdateOrder">Update Status</button>
             </div>
         </div>
@@ -328,7 +326,7 @@ function changeOrderStatus(orderId, newStatus) {
             const notification = $(`
                 <div class="alert alert-success alert-dismissible fade show position-fixed" 
                      style="top: 20px; left: 50%; transform: translateX(-50%); z-index: 1060;">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     Order status updated successfully!
                 </div>
             `);

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QROutputInterface;
 
 class RestaurantTableController extends Controller
 {
@@ -115,62 +117,66 @@ class RestaurantTableController extends Controller
     }
 
     /**
-     * Generate QR code for table
+     * Generate QR code for table using local PHP library (no external API).
      */
     public function generateQr(Request $request, RestaurantTable $table)
     {
-        // Create QR code content (URL to menu with table parameter)
-        $menuUrl = route('menu', ['table' => $table->table_number]);
-
-        // Use a public QR generation API to fetch a PNG image
-        $qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' . urlencode($menuUrl);
+        // URL that the QR code will encode — the table menu page
+        $menuUrl = route('public.menu', ['table' => $table->table_number]);
 
         try {
-            $response = Http::timeout(10)->get($qrApi);
-            if ($response->successful()) {
-                $filename = 'qr-codes/table-' . $table->table_number . '.png';
-                Storage::disk('public')->put($filename, $response->body());
-
-                $table->update([
-                    'qr_code_path' => $filename,
-                    'qr_code_generated_at' => now(),
-                ]);
-
-                $payload = [
-                    'success' => true,
-                    'message' => 'QR code generated successfully.',
-                    'menu_url' => $menuUrl,
-                    'qr_path' => Storage::disk('public')->url($filename)
-                ];
-
-                if ($request->wantsJson()) {
-                    return response()->json($payload);
-                }
-
-                return redirect()->route('admin.tables.index')->with('success', 'QR code generated successfully.');
-            }
-        } catch (\Throwable $e) {
-            // fall through to error below
-        }
-
-        // Fallback: store URL as a txt file (previous behavior)
-        $filename = 'qr-codes/table-' . $table->table_number . '.txt';
-        Storage::disk('public')->put($filename, $menuUrl);
-
-        $table->update([
-            'qr_code_path' => $filename,
-            'qr_code_generated_at' => now(),
-        ]);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'QR generation service unavailable; saved URL as placeholder.',
-                'menu_url' => $menuUrl,
+            // Configure QR output: PNG image, 10px per module (~400px output), high ECC
+            $options = new QROptions([
+                'outputType' => QROutputInterface::GDIMAGE_PNG,
+                'eccLevel'   => QRCode::ECC_H,
+                'scale'      => 10,
+                'imageBase64'=> false,
             ]);
-        }
 
-        return redirect()->route('admin.tables.index')->with('error', 'QR generation failed; saved URL as placeholder.');
+            // Generate PNG binary in-memory
+            $pngData = (new QRCode($options))->render($menuUrl);
+
+            // Ensure the qr-codes folder exists on the public disk
+            $dir = 'qr-codes';
+            if (! Storage::disk('public')->exists($dir)) {
+                Storage::disk('public')->makeDirectory($dir);
+            }
+
+            $filename = $dir . '/table-' . $table->table_number . '.png';
+            Storage::disk('public')->put($filename, $pngData);
+
+            $table->update([
+                'qr_code_path'         => $filename,
+                'qr_code_generated_at' => now(),
+            ]);
+
+            $payload = [
+                'success'  => true,
+                'message'  => 'QR code generated successfully.',
+                'menu_url' => $menuUrl,
+                'qr_path'  => Storage::disk('public')->url($filename),
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json($payload);
+            }
+
+            return redirect()->route('admin.tables.show', $table)
+                ->with('success', 'QR code generated successfully.');
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('QR generation failed: ' . $e->getMessage());
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'QR generation failed: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('admin.tables.index')
+                ->with('error', 'QR generation failed: ' . $e->getMessage());
+        }
     }
 
     /**

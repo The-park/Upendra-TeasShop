@@ -53,17 +53,18 @@
                     <a href="{{ route('admin.tables.edit', $table) }}" class="btn btn-warning btn-block mb-2">
                         <i class="fas fa-edit"></i> Edit Table
                     </a>
-                    
+
+                    <button type="button" class="btn btn-{{ $table->qr_code_path ? 'success' : 'primary' }} btn-block mb-2" onclick="generateQR()">
+                        <i class="fas fa-{{ $table->qr_code_path ? 'sync' : 'qrcode' }}"></i>
+                        {{ $table->qr_code_path ? 'Regenerate QR Code' : 'Generate QR Code' }}
+                    </button>
+
                     @if($table->qr_code_path)
                         <a href="{{ route('admin.tables.download-qr', $table) }}" class="btn btn-secondary btn-block mb-2">
                             <i class="fas fa-download"></i> Download QR Code
                         </a>
-                    @else
-                        <button type="button" class="btn btn-primary btn-block mb-2" onclick="generateQR()">
-                            <i class="fas fa-qrcode"></i> Generate QR Code
-                        </button>
                     @endif
-                    
+
                     <button type="button" class="btn btn-danger btn-block" onclick="deleteTable()">
                         <i class="fas fa-trash"></i> Delete Table
                     </button>
@@ -75,14 +76,25 @@
         @if($table->qr_code_path)
             <div class="card">
                 <div class="card-header">
-                    <h6 class="card-title mb-0">QR Code Information</h6>
+                    <h6 class="card-title mb-0">QR Code</h6>
                 </div>
                 <div class="card-body">
                     <div class="text-center">
-                        <i class="fas fa-qrcode fa-3x text-success mb-3"></i>
-                        <p class="mb-2"><strong>QR Code Generated</strong></p>
-                        <p class="text-muted mb-3">{{ $table->qr_code_generated_at->format('M j, Y g:i A') }}</p>
-                        
+                        @php
+                            $ext = strtolower(pathinfo($table->qr_code_path, PATHINFO_EXTENSION));
+                        @endphp
+                        @if(in_array($ext, ['png','jpg','jpeg','svg']))
+                            <img src="{{ Storage::disk('public')->url($table->qr_code_path) }}"
+                                 alt="QR Code for {{ $table->table_number }}"
+                                 style="max-width:220px;width:100%;border:1px solid #dee2e6;border-radius:8px;padding:8px;background:#fff;" />
+                        @else
+                            <i class="fas fa-qrcode fa-4x text-success mb-3"></i>
+                        @endif
+
+                        <p class="text-muted mt-2 mb-3" style="font-size:.82rem;">
+                            Generated: {{ $table->qr_code_generated_at?->format('M j, Y g:i A') ?? 'Unknown' }}
+                        </p>
+
                         <div class="row">
                             <div class="col-6">
                                 <button type="button" class="btn btn-primary btn-sm btn-block" onclick="generateQR()">
@@ -239,9 +251,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">{{ $table->qr_code_path ? 'Regenerate' : 'Generate' }} QR Code</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <i class="fas fa-qrcode fa-3x text-primary mb-3"></i>
@@ -249,7 +259,7 @@
                 <p class="text-muted">Customers will scan this to access the menu.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmGenerateQR">
                     <i class="fas fa-qrcode"></i> {{ $table->qr_code_path ? 'Regenerate' : 'Generate' }}
                 </button>
@@ -264,9 +274,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete <strong>{{ $table->table_number }}</strong>?</p>
@@ -279,7 +287,7 @@
                 @endif
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 @if($table->orders()->whereIn('status', ['pending', 'confirmed', 'preparing'])->count() == 0)
                     <form method="POST" action="{{ route('admin.tables.destroy', $table) }}" style="display: inline;">
                         @csrf
@@ -296,33 +304,50 @@
 @push('scripts')
 <script>
 function generateQR() {
-    $('#qrModal').modal('show');
+    const modalEl = document.getElementById('qrModal');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
 function deleteTable() {
-    $('#deleteModal').modal('show');
+    const modalEl = document.getElementById('deleteModal');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
-$('#confirmGenerateQR').click(function() {
-    const button = $(this);
-    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generating...');
-    
-    $.post('{{ route("admin.tables.generate-qr", $table) }}', {
-        _token: '{{ csrf_token() }}'
-    })
-    .done(function(response) {
-        if (response.success) {
-            $('#qrModal').modal('hide');
-            location.reload();
-        } else {
-            alert('Error: ' + response.message);
-        }
-    })
-    .fail(function() {
-        alert('Error generating QR code. Please try again.');
-    })
-    .always(function() {
-        button.prop('disabled', false).html('<i class="fas fa-qrcode"></i> {{ $table->qr_code_path ? "Regenerate" : "Generate" }}');
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmBtn = document.getElementById('confirmGenerateQR');
+    if (!confirmBtn) return;
+
+    confirmBtn.addEventListener('click', function () {
+        const button = this;
+        const originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        fetch('{{ route("admin.tables.generate-qr", $table) }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (response) {
+            if (response && response.success) {
+                bootstrap.Modal.getInstance(document.getElementById('qrModal'))?.hide();
+                location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Unknown error'));
+            }
+        })
+        .catch(function () {
+            alert('Error generating QR code. Please try again.');
+        })
+        .finally(function () {
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+        });
     });
 });
 </script>
