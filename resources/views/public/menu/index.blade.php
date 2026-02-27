@@ -476,41 +476,10 @@ document.getElementById('cartBtn').addEventListener('click', () => { document.ge
 function goToCheckout() {
     if (!selectedTableId) { document.getElementById('tablePicker').classList.remove('hidden'); closeCart(); return; }
     if (!Object.keys(cart).length) { showToast('Add items first', 'bi-exclamation-circle'); return; }
-
-    // Build simple {productId: qty} map for the session sync endpoint
-    const cartPayload = {};
-    Object.keys(cart).forEach(id => { cartPayload[id] = { qty: cart[id].qty, price: cart[id].price, name: cart[id].name }; });
-
-    // Also save localStorage in the array format the checkout page expects
-    const cartArray = Object.keys(cart).map(id => ({
-        id: parseInt(id),
-        name: cart[id].name,
-        price: cart[id].price,
-        quantity: cart[id].qty,
-        image: cart[id].image || ''
-    }));
-    localStorage.setItem('teashop_cart', JSON.stringify(cartArray));
+    localStorage.setItem('teashop_cart', JSON.stringify(cart));
     localStorage.setItem('teashop_table_id', selectedTableId);
     localStorage.setItem('teashop_table_num', selectedTableNumber);
-
-    // Sync cart into Laravel session first, then redirect to checkout
-    fetch('{{ route("cart.sync") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
-        body: JSON.stringify({ cart: cartPayload })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = '{{ route("public.checkout") }}';
-        } else {
-            showToast('Could not sync cart. Try again.', 'bi-exclamation-circle');
-        }
-    })
-    .catch(() => {
-        // fallback: redirect anyway
-        window.location.href = '{{ route("public.checkout") }}';
-    });
+    window.location.href = '{{ route("public.checkout") }}';
 }
 
 /* Search */
