@@ -17,11 +17,12 @@ class OrderController extends Controller
      */
     public function checkout()
     {
+        // Cart is stored in localStorage on the client; the JS on the checkout
+        // page handles the empty-cart redirect.  We still build $cartItems from
+        // the session so the Blade view can pre-render a server-side summary if
+        // the session cart is present (populated by the cart.sync call made in
+        // goToCheckout() on the menu page).
         $cart = Session::get('cart', []);
-        
-        if (empty($cart)) {
-            return redirect()->route('menu')->with('error', 'Your cart is empty.');
-        }
 
         // Get cart items with product details
         $cartItems = [];
@@ -82,6 +83,18 @@ class OrderController extends Controller
         ]);
 
         $cart = Session::get('cart', []);
+
+        // Fallback: if the session cart is empty but the client sent cart items
+        // (the checkout JS passes them for reliability), rebuild from the request.
+        if (empty($cart) && $request->has('items')) {
+            foreach ((array) $request->input('items', []) as $item) {
+                $id  = $item['id']       ?? null;
+                $qty = $item['quantity'] ?? 1;
+                if ($id && (int) $qty > 0) {
+                    $cart[(string) $id] = (int) $qty;
+                }
+            }
+        }
 
         if (empty($cart)) {
             if ($request->wantsJson() || $request->ajax()) {

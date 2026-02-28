@@ -479,7 +479,23 @@ function goToCheckout() {
     localStorage.setItem('teashop_cart', JSON.stringify(cart));
     localStorage.setItem('teashop_table_id', selectedTableId);
     localStorage.setItem('teashop_table_num', selectedTableNumber);
-    window.location.href = '{{ route("public.checkout") }}';
+
+    // Sync cart and table into the PHP session before navigating so the
+    // server-side checkout / place-order controllers can read the cart.
+    const csrfToken = '{{ csrf_token() }}';
+    const syncCart  = fetch('{{ route("cart.sync") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        body: JSON.stringify({ cart: cart })
+    });
+    const syncTable = fetch('{{ route("public.select-table") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        body: JSON.stringify({ table_id: selectedTableId })
+    });
+    Promise.all([syncCart, syncTable])
+        .catch(() => {/* navigate regardless */})
+        .finally(() => { window.location.href = '{{ route("public.checkout") }}'; });
 }
 
 /* Search */

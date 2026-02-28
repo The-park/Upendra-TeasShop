@@ -667,6 +667,7 @@
                 notes:           $('#orderNotes').val().trim(),
                 payment_method:  selectedPayment,
                 table_number:    '{{ session('selected_table_number', '') }}',
+                items:           cart,   // fallback: server reads session cart first, then these
                 _token:          '{{ csrf_token() }}'
             };
             
