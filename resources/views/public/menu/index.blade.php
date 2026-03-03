@@ -496,8 +496,10 @@ function updateProductButtons() {
             const pname = wrap.dataset.pname;
             const pprice = wrap.dataset.pprice;
             const pimg = wrap.dataset.pimg;
+            const pnameJS = JSON.stringify(pname);
+            const pimgJS = JSON.stringify(pimg);
             wrap.innerHTML = `<button class="btn-add" id="add-${id}"
-                onclick="addToCart(${id}, '${pname}', ${pprice}, '${pimg}')">
+                onclick="addToCart(${id}, ${pnameJS}, ${pprice}, ${pimgJS})">
                 <i class="bi bi-plus-lg"></i> Add
             </button>`;
         }
