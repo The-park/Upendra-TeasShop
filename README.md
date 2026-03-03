@@ -1,5 +1,5 @@
 # TeaShop Restaurant Management System
-
+ 
 A comprehensive restaurant management system built with Laravel 11, featuring admin panel, order management, QR code integration, and customer-facing menu interface.
 
 ## 🌟 Features
