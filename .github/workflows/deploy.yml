@@ -3,7 +3,8 @@ name: Deploy Laravel to TMD Hosting
 # 1. THE TRIGGER: This tells GitHub to run this script ONLY when you push to the 'main' branch.
 on:
   push:
-    branches: [ main ]
+    #branches: [ main ]  
+    branches: [ The-Park-Edits-V2  ] 
 
 jobs:
   deploy:
