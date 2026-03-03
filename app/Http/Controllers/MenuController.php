@@ -40,10 +40,11 @@ class MenuController extends Controller
             ->withCount(['products' => function ($query) {
                 $query->where('is_available', true);
             }])
-            ->having('products_count', '>', 0)
             ->orderBy('display_order')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->filter(fn ($category) => $category->products_count > 0)
+            ->values();
 
         // Flat products list
         $products = Product::where('is_available', true)

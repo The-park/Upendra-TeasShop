@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,7 +32,11 @@ return new class extends Migration
             $table->index('category_id');
             $table->index('is_available');
             $table->index('is_featured');
-            $table->fullText(['name', 'description']);
+
+            // Fulltext indexes are not supported by SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText(['name', 'description']);
+            }
         });
     }
 

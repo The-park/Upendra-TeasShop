@@ -36,7 +36,7 @@
     <div class="col-6 col-md-3">
         <div class="stat-card stat-card-gold">
             <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-            <div class="stat-info"><h3>{{ $avgPrepTime ?? '�' }}m</h3><p>Avg Prep Time</p></div>
+            <div class="stat-info"><h3>{{ $avgPrepTime ? $avgPrepTime . 'm' : 'N/A' }}</h3><p>Avg Prep Time</p></div>
         </div>
     </div>
 </div>

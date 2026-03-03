@@ -195,6 +195,96 @@
                 padding-left: 1rem;
             }
         }
+
+        /* ─── 3D Box Cricket game styles ─── */
+        .cricket-game-section {
+            background: linear-gradient(135deg, #0a1628 0%, #0d2818 100%) !important;
+            border: 2px solid #2d8c2d;
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+        }
+        .cricket-game-section::before {
+            content: '';
+            position: absolute;
+            top: -30%; right: -10%;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(76,175,80,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .cricket-header { position: relative; z-index: 2; }
+        .cricket-header h4 { color: #e8f5e9; }
+        .cricket-header p { color: #81c784 !important; }
+        .cricket-emoji {
+            font-size: 1.4em;
+            display: inline-block;
+            animation: cricketBounce 2s ease-in-out infinite;
+        }
+        @keyframes cricketBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-5px) rotate(-10deg); }
+        }
+        .cricket3d-container {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            touch-action: manipulation;
+            position: relative;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            border: 2px solid #4a8c3f;
+        }
+        .cricket3d-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+        /* overlay UI inside the 3D container */
+        .cricket3d-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .c3d-scoreboard {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.7); border-radius: 10px;
+            padding: 8px 16px; color: #fff;
+            font-family: 'Segoe UI', sans-serif; font-size: 14px;
+        }
+        .c3d-runs { font-weight: 700; font-size: 20px; color: #4ade80; }
+        .c3d-balls { color: #a5b4fc; }
+        .c3d-best  { color: #fbbf24; }
+        .c3d-result {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 32px; font-weight: 800;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.7);
+            opacity: 0; transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .c3d-instruct {
+            position: absolute; bottom: 16px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: #a5d6a7;
+            padding: 8px 22px; border-radius: 25px;
+            font-size: 15px; font-weight: 600;
+            transition: opacity 0.3s; white-space: nowrap;
+        }
+        .cricket-rules {
+            border-top: 1px dashed rgba(165,214,167,0.3);
+            padding-top: 10px;
+        }
+        .cricket-rules small { color: #81c784 !important; }
+        @media (max-width: 500px) {
+            .c3d-scoreboard { font-size: 11px; padding: 6px 10px; }
+            .c3d-runs { font-size: 16px; }
+            .c3d-result { font-size: 22px; }
+            .c3d-instruct { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -397,6 +487,35 @@
                     </div>
                 </div>
 
+                {{-- ═══════ 3D BOX CRICKET — while order is active ═══════ --}}
+                @if(!in_array($order->status, ['served', 'cancelled']))
+                <div class="col-12 mb-4">
+                    <div class="order-card cricket-game-section text-center">
+                        <div class="cricket-header mb-3">
+                            <h4 class="mb-1"><span class="cricket-emoji">🏏</span> Box Cricket 3D</h4>
+                            <p class="text-muted mb-0">Play while we prepare your order!</p>
+                        </div>
+                        <div id="cricket3dContainer" class="cricket3d-container"></div>
+                        <div class="mt-3 d-flex justify-content-center gap-3 flex-wrap align-items-center">
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fas fa-hand-pointer me-1"></i> Tap to Bat
+                            </span>
+                            <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-bullseye me-1"></i> Time your shot!
+                            </span>
+                            <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-trophy me-1"></i> Hit 6s &amp; 4s!
+                            </span>
+                        </div>
+                        <div class="cricket-rules mt-3">
+                            <small>
+                                12 balls &bull; 3 wickets &bull; 1 Batsman vs 1 Bowler + 4 Fielders
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Order Summary Sidebar -->
                 <div class="col-lg-4">
                     <!-- Order Info -->
@@ -504,10 +623,43 @@
             <i class="fas fa-sync fa-spin me-1"></i> Refreshing...
         </div>
         <script>
-            setTimeout(function() { location.reload(); }, 30000);
+            // Smart auto-refresh: poll status via AJAX instead of full reload
+            // so the cricket game isn't interrupted.
+            (function () {
+                var currentStatus = @json($order->status);
+                var orderNumber   = @json($order->order_number);
+
+                function pollStatus() {
+                    fetch('/order/' + orderNumber + '/status')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data.status !== currentStatus) {
+                                // Status changed — reload the page to update timeline
+                                document.getElementById('refreshIndicator').style.display = 'block';
+                                location.reload();
+                            }
+                        })
+                        .catch(function () { /* silent */ });
+                }
+
+                setInterval(pollStatus, 15000); // check every 15 seconds
+            })();
         </script>
     @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {{-- 3D Box Cricket game (only for active orders) --}}
+    @if(isset($order) && !in_array($order->status, ['served', 'cancelled']))
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="{{ asset('js/cricket-game-3d.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.BoxCricket3D) {
+                window.BoxCricket3D.init('cricket3dContainer');
+            }
+        });
+    </script>
+    @endif
 </body>
 </html>

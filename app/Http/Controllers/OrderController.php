@@ -240,10 +240,22 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,preparing,ready,served,cancelled'
         ]);
 
-        $order->update([
+        $data = [
             'status' => $request->status,
             'updated_at' => now()
-        ]);
+        ];
+
+        // Set served_at timestamp when order is marked as served
+        if ($request->status === 'served' && !$order->served_at) {
+            $data['served_at'] = now();
+        }
+
+        // Set cancelled_at timestamp when order is cancelled
+        if ($request->status === 'cancelled' && !$order->cancelled_at) {
+            $data['cancelled_at'] = now();
+        }
+
+        $order->update($data);
 
         return response()->json([
             'success' => true,
@@ -296,7 +308,10 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $order->update(['status' => 'cancelled']);
+        $order->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+        ]);
 
         return response()->json([
             'success' => true,
