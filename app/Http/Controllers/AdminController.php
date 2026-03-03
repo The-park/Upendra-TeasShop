@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -82,12 +85,56 @@ class AdminController extends Controller
      */
     public function analytics()
     {
-        // Basic summary statistics for analytics page
-        $revenue = Order::where('status', '!=', 'cancelled')->sum('total_amount');
-        $orders_count = Order::where('status', '!=', 'cancelled')->count();
-        $new_customers = User::whereDate('created_at', '>=', now()->subDays(30))->count();
+        $currencySymbol = Setting::get('currency_symbol', '$');
 
-        return view('admin.analytics.index', compact('revenue', 'orders_count', 'new_customers'));
+        // This month's stats
+        $monthStart = Carbon::now()->startOfMonth();
+        $monthRevenue = Order::where('status', '!=', 'cancelled')
+            ->whereDate('created_at', '>=', $monthStart)
+            ->sum('total_amount');
+        $monthOrders = Order::where('status', '!=', 'cancelled')
+            ->whereDate('created_at', '>=', $monthStart)
+            ->count();
+
+        // Unique customers (distinct customer names in non-cancelled orders)
+        $uniqueCustomers = Order::where('status', '!=', 'cancelled')
+            ->whereDate('created_at', '>=', $monthStart)
+            ->distinct('customer_name')
+            ->count('customer_name');
+
+        // Average prep time in minutes (pending → confirmed/preparing → served)
+        $avgPrepTime = Order::where('status', 'served')
+            ->whereNotNull('served_at')
+            ->whereDate('created_at', '>=', $monthStart)
+            ->selectRaw('AVG(CAST((julianday(served_at) - julianday(created_at)) * 1440 AS INTEGER)) as avg_mins')
+            ->value('avg_mins');
+        $avgPrepTime = $avgPrepTime ? round($avgPrepTime) : null;
+
+        // Hourly order distribution (today)
+        $hourlyData = array_fill(0, 24, 0);
+        $hourlyRows = Order::whereDate('created_at', Carbon::today())
+            ->where('status', '!=', 'cancelled')
+            ->selectRaw("CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as cnt")
+            ->groupBy('hour')
+            ->pluck('cnt', 'hour');
+        foreach ($hourlyRows as $hour => $cnt) {
+            $hourlyData[(int) $hour] = $cnt;
+        }
+
+        // Orders by status
+        $statusMap = ['served' => 0, 'preparing' => 0, 'ready' => 0, 'pending' => 0, 'cancelled' => 0];
+        $statusRows = Order::selectRaw('status, COUNT(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
+        foreach ($statusRows as $status => $cnt) {
+            if (array_key_exists($status, $statusMap)) {
+                $statusMap[$status] = $cnt;
+            }
+        }
+        $statusCounts = array_values($statusMap);
+
+        return view('admin.analytics.index', compact(
+            'currencySymbol', 'monthRevenue', 'monthOrders',
+            'uniqueCustomers', 'avgPrepTime', 'hourlyData', 'statusCounts'
+        ));
     }
 
     /**
@@ -95,8 +142,39 @@ class AdminController extends Controller
      */
     public function salesReport(Request $request)
     {
-        // TODO: Implement sales reporting
-        return view('admin.reports.sales');
+        $currencySymbol = Setting::get('currency_symbol', '$');
+        $period = (int) $request->input('period', 30);
+
+        $startDate = Carbon::today()->subDays($period);
+
+        $totalRevenue = Order::where('status', '!=', 'cancelled')
+            ->whereDate('created_at', '>=', $startDate)
+            ->sum('total_amount');
+
+        $totalOrders = Order::where('status', '!=', 'cancelled')
+            ->whereDate('created_at', '>=', $startDate)
+            ->count();
+
+        $avgOrder = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+
+        $cancelledOrders = Order::where('status', 'cancelled')
+            ->whereDate('created_at', '>=', $startDate)
+            ->count();
+
+        // Daily breakdown
+        $dailyData = Order::whereDate('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date")
+            ->selectRaw("SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END) as revenue")
+            ->selectRaw("SUM(CASE WHEN status != 'cancelled' THEN 1 ELSE 0 END) as order_count")
+            ->selectRaw("SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled")
+            ->groupBy('date')
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return view('admin.reports.sales', compact(
+            'currencySymbol', 'totalRevenue', 'totalOrders',
+            'avgOrder', 'cancelledOrders', 'dailyData'
+        ));
     }
 
     /**
@@ -104,8 +182,43 @@ class AdminController extends Controller
      */
     public function productReport(Request $request)
     {
-        // TODO: Implement product reporting
-        return view('admin.reports.products');
+        $currencySymbol = Setting::get('currency_symbol', '$');
+        $period = $request->input('period', '30');
+        $categoryId = $request->input('category');
+
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+
+        // Build product stats query
+        $query = Product::select(
+                'products.id',
+                'products.name',
+                'products.price as selling_price',
+                'products.category_id'
+            )
+            ->selectRaw('SUM(order_items.quantity) as total_sold')
+            ->selectRaw('SUM(order_items.subtotal) as total_revenue')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.status', '!=', 'cancelled');
+
+        if ($period !== 'all') {
+            $startDate = Carbon::today()->subDays((int) $period);
+            $query->whereDate('orders.created_at', '>=', $startDate);
+        }
+
+        if ($categoryId) {
+            $query->where('products.category_id', $categoryId);
+        }
+
+        $productStats = $query
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.category_id')
+            ->orderBy('total_revenue', 'desc')
+            ->with('category')
+            ->get();
+
+        return view('admin.reports.products', compact(
+            'currencySymbol', 'categories', 'productStats'
+        ));
     }
 
     /**

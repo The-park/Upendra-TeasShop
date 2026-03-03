@@ -86,6 +86,12 @@
         .btn-add.in-cart { background: var(--tea-pale); color: var(--tea-accent); border: 1.5px solid var(--tea-accent); }
         .btn-unavailable { background: #f0f0f0; color: #aaa; border: none; border-radius: 20px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: not-allowed; font-family: 'Inter', sans-serif; }
 
+        /* Inline qty control on product card */
+        .card-qty-ctrl { display: inline-flex; align-items: center; gap: 2px; background: var(--tea-pale); border: 1.5px solid var(--tea-accent); border-radius: 20px; padding: 3px 4px; }
+        .card-qty-btn { width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--tea-accent); color: #fff; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s; font-family: 'Inter', sans-serif; line-height: 1; }
+        .card-qty-btn:hover { background: var(--tea-mid); }
+        .card-qty-num { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; color: var(--tea-accent); font-family: 'Poppins', sans-serif; }
+
         /* Empty */
         .empty-state { text-align: center; padding: 60px 20px; color: #999; }
         .empty-state i { font-size: 52px; color: #d0d8d0; display: block; margin-bottom: 14px; }
@@ -300,10 +306,16 @@
                     <div class="product-footer">
                         <span class="product-price">{{ $currencySymbol }}{{ number_format($product->price, 2) }}</span>
                         @if($product->status === 'active')
-                        <button class="btn-add" id="add-{{ $product->id }}"
-                                onclick="addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }}, '{{ $product->image_url ?? '' }}')">
-                            <i class="bi bi-plus-lg"></i> Add
-                        </button>
+                        <div id="add-wrap-{{ $product->id }}"
+                             data-pid="{{ $product->id }}"
+                             data-pname="{{ addslashes($product->name) }}"
+                             data-pprice="{{ $product->price }}"
+                             data-pimg="{{ $product->image_url ?? '' }}">
+                            <button class="btn-add" id="add-{{ $product->id }}"
+                                    onclick="addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }}, '{{ $product->image_url ?? '' }}')">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </button>
+                        </div>
                         @else
                         <span class="btn-unavailable">Unavailable</span>
                         @endif
@@ -383,6 +395,12 @@ document.getElementById('tpSearch')?.addEventListener('input', function () {
 document.querySelectorAll('.tp-table-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         const id = this.dataset.id, num = this.dataset.num;
+        // Reset all table buttons first
+        document.querySelectorAll('.tp-table-btn').forEach(b => {
+            b.style.background = '';
+            b.style.borderColor = '';
+        });
+        // Highlight only the selected one
         this.style.background = 'var(--tea-pale)';
         this.style.borderColor = 'var(--tea-accent)';
         fetch('{{ route("public.select-table") }}', {
@@ -467,6 +485,34 @@ function renderCart() {
     cb.textContent = count; cb.style.display = count>0?'flex':'none';
     document.getElementById('floatingCount').textContent = count;
     document.getElementById('floatingCart').classList.toggle('show', count>0);
+    updateProductButtons();
+}
+
+function updateProductButtons() {
+    // Reset all product card buttons that are no longer in cart
+    document.querySelectorAll('[id^="add-wrap-"]').forEach(wrap => {
+        const id = wrap.dataset.pid;
+        if (!cart[id]) {
+            const pname = wrap.dataset.pname;
+            const pprice = wrap.dataset.pprice;
+            const pimg = wrap.dataset.pimg;
+            wrap.innerHTML = `<button class="btn-add" id="add-${id}"
+                onclick="addToCart(${id}, '${pname}', ${pprice}, '${pimg}')">
+                <i class="bi bi-plus-lg"></i> Add
+            </button>`;
+        }
+    });
+    // Update buttons for items in cart to show qty control
+    Object.keys(cart).forEach(id => {
+        const wrap = document.getElementById('add-wrap-' + id);
+        if (!wrap) return;
+        const item = cart[id];
+        wrap.innerHTML = `<div class="card-qty-ctrl">
+            <button class="card-qty-btn" onclick="changeQty(${id},-1)" title="Remove one">−</button>
+            <span class="card-qty-num">${item.qty}</span>
+            <button class="card-qty-btn" onclick="changeQty(${id},1)" title="Add one">+</button>
+        </div>`;
+    });
 }
 
 function openCart()  { document.getElementById('cartSidebar').classList.add('open'); document.getElementById('cartOverlay').classList.add('show'); }

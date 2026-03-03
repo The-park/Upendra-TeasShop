@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\UnitTests;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +24,7 @@ class AdminAuthTest extends TestCase
             'password' => 'password'
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($admin);
     }
 
@@ -37,7 +37,7 @@ class AdminAuthTest extends TestCase
     public function test_non_admin_cannot_access_admin_dashboard()
     {
         $user = User::factory()->create([
-            'role' => 'customer'
+            'role' => 'staff'
         ]);
 
         $response = $this->actingAs($user)->get('/admin/dashboard');
@@ -54,7 +54,9 @@ class AdminAuthTest extends TestCase
             '/admin/categories',
             '/admin/tables',
             '/admin/orders/history',
-            '/admin/reports'
+            '/admin/analytics',
+            '/admin/analytics/sales',
+            '/admin/analytics/products',
         ];
 
         foreach ($routes as $route) {
