@@ -52,7 +52,7 @@
     var hasSwung        = false;
     var ballHit         = false;    // true once bat physically contacts ball
     var batPivot;
-    var batsmanBaseRotY = -Math.PI / 2;
+    var batsmanBaseRotY = Math.PI / 2;
 
     /* Bat collision markers */
     var batTip, batMid, batBase;
@@ -315,13 +315,13 @@
     function buildPlayers() {
         // ── BATSMAN ──
         batsmanGroup = buildPlayerFigure(0xffffff, 0xeeeeee);
-        batsmanGroup.position.set(0.6, 0, PITCH_L / 2 - 1.5);
+        batsmanGroup.position.set(-0.6, 0, PITCH_L / 2 - 1.5);
         batsmanGroup.rotation.y = batsmanBaseRotY;
         scene.add(batsmanGroup);
 
         // Bat pivot at hand level
         batPivot = new THREE.Group();
-        batPivot.position.set(-0.55, 1.05, 0.15);
+        batPivot.position.set(0.55, 1.05, 0.15);
         batsmanGroup.add(batPivot);
 
         // Bat blade
@@ -797,7 +797,7 @@
             }
 
             if (batsmanGroup) {
-                batsmanGroup.rotation.y = batsmanBaseRotY + swingFrac * 1.2;
+                batsmanGroup.rotation.y = batsmanBaseRotY - swingFrac * 1.2;
             }
 
             if (batSwingAngle > 130) {
