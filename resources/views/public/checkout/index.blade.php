@@ -578,6 +578,17 @@
             }
 
             showLocationDisplay(lat, lng, customerAddress);
+
+            // Notify native app to show a persistent notification while location is active
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocationNotifier && window.Capacitor.Plugins.LocationNotifier.show) {
+                    const title = 'TeaShop: Location Sharing Active';
+                    const text = customerAddress ? customerAddress : `Sharing your location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+                    window.Capacitor.Plugins.LocationNotifier.show({ title, text });
+                }
+            } catch (err) {
+                console.warn('LocationNotifier plugin call failed', err);
+            }
         }
 
         function showLocationDisplay(lat, lng, address) {
@@ -808,6 +819,14 @@
                 })
                 .always(function() {
                     $('#loadingOverlay').hide();
+                    // Clear native persistent notification (if present) after order attempt
+                    try {
+                        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocationNotifier && window.Capacitor.Plugins.LocationNotifier.clear) {
+                            window.Capacitor.Plugins.LocationNotifier.clear();
+                        }
+                    } catch (err) {
+                        console.warn('Clearing LocationNotifier failed', err);
+                    }
                 });
         }
     </script>
