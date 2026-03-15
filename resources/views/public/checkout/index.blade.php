@@ -581,13 +581,17 @@
 
             // Notify native app to show a persistent notification while location is active
             try {
+                const title = 'TeaShop: Location Sharing Active';
+                const text = customerAddress ? customerAddress : `Sharing your location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+                // Prefer Capacitor plugin if available
                 if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocationNotifier && window.Capacitor.Plugins.LocationNotifier.show) {
-                    const title = 'TeaShop: Location Sharing Active';
-                    const text = customerAddress ? customerAddress : `Sharing your location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
                     window.Capacitor.Plugins.LocationNotifier.show({ title, text });
+                } else if (window.AndroidLocationNotifier && window.AndroidLocationNotifier.show) {
+                    // Fallback to JS interface added in MainActivity
+                    window.AndroidLocationNotifier.show(title, text);
                 }
             } catch (err) {
-                console.warn('LocationNotifier plugin call failed', err);
+                console.warn('LocationNotifier call failed', err);
             }
         }
 
@@ -805,6 +809,17 @@
                         localStorage.removeItem('teashop_cart');
                         localStorage.removeItem('teashop_table');
                         localStorage.removeItem('teashop_table_number');
+
+                        // Show mobile OS notification if running inside app
+                        try {
+                            const notifyTitle = 'TeaShop Order Placed';
+                            const notifyText  = 'Your order has been placed successfully.';
+                            if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
+                                window.AndroidLocationNotifier.showSimple(notifyTitle, notifyText);
+                            }
+                        } catch (e) {
+                            console.warn('Order notification failed', e);
+                        }
                         
                         // Redirect to success page
                         window.location.href = response.redirect_url;
@@ -823,6 +838,8 @@
                     try {
                         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocationNotifier && window.Capacitor.Plugins.LocationNotifier.clear) {
                             window.Capacitor.Plugins.LocationNotifier.clear();
+                        } else if (window.AndroidLocationNotifier && window.AndroidLocationNotifier.clear) {
+                            window.AndroidLocationNotifier.clear();
                         }
                     } catch (err) {
                         console.warn('Clearing LocationNotifier failed', err);

@@ -45,6 +45,17 @@ window.showToast = function(type, message) {
     });
 };
 
+// Native mobile notification helper (Android WebView bridge)
+window.notifyMobile = function(title, message) {
+    try {
+        if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
+            window.AndroidLocationNotifier.showSimple(title, message);
+        }
+    } catch (e) {
+        console.warn('notifyMobile failed', e);
+    }
+};
+
 // Loading Button Helper
 window.setButtonLoading = function(button, loading = true) {
     const $btn = $(button);
@@ -77,6 +88,8 @@ window.TeaShopCart = {
                 
                 // Show success message
                 showToast('success', `${productName} added to cart!`);
+                // Mobile OS notification (if running inside the app)
+                window.notifyMobile('TeaShop', `${productName} added to your cart`);
                 
                 // Animate FAB
                 $('#cartFab').addClass('bounce');
