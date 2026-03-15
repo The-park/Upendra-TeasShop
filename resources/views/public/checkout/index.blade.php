@@ -579,19 +579,15 @@
 
             showLocationDisplay(lat, lng, customerAddress);
 
-            // Notify native app to show a persistent notification while location is active
+            // Notify mobile app (if available) that location sharing is active
             try {
                 const title = 'TeaShop: Location Sharing Active';
                 const text = customerAddress ? customerAddress : `Sharing your location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
-                // Prefer Capacitor plugin if available
-                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocationNotifier && window.Capacitor.Plugins.LocationNotifier.show) {
-                    window.Capacitor.Plugins.LocationNotifier.show({ title, text });
-                } else if (window.AndroidLocationNotifier && window.AndroidLocationNotifier.show) {
-                    // Fallback to JS interface added in MainActivity
-                    window.AndroidLocationNotifier.show(title, text);
+                if (window.notifyMobile) {
+                    window.notifyMobile(title, text);
                 }
             } catch (err) {
-                console.warn('LocationNotifier call failed', err);
+                console.warn('Location notification failed', err);
             }
         }
 
@@ -814,8 +810,8 @@
                         try {
                             const notifyTitle = 'TeaShop Order Placed';
                             const notifyText  = 'Your order has been placed successfully.';
-                            if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
-                                window.AndroidLocationNotifier.showSimple(notifyTitle, notifyText);
+                            if (window.notifyMobile) {
+                                window.notifyMobile(notifyTitle, notifyText);
                             }
                         } catch (e) {
                             console.warn('Order notification failed', e);

@@ -2,12 +2,17 @@
 import './bootstrap';
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import $ from 'jquery';
+// Capacitor Local Notifications for mobile app
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Expose Bootstrap globally so inline/blade scripts can call bootstrap.Modal etc.
 window.bootstrap = bootstrap;
 
 // Expose jQuery globally so inline scripts and CDN-independent views can use it
 window.$ = window.jQuery = $;
+
+// Expose LocalNotifications globally for inline scripts
+window.LocalNotifications = LocalNotifications;
 
 // CSRF Token Setup for AJAX
 $.ajaxSetup({
@@ -45,11 +50,29 @@ window.showToast = function(type, message) {
     });
 };
 
-// Native mobile notification helper (Android WebView bridge)
-window.notifyMobile = function(title, message) {
+// Mobile notification helper: prefers Capacitor LocalNotifications, falls back to Android bridge
+window.notifyMobile = async function(title, message, id) {
     try {
+        // Prefer Capacitor Local Notifications when available (works on Android & iOS apps)
+        if (window.LocalNotifications && typeof window.LocalNotifications.requestPermissions === 'function') {
+            const perm = await window.LocalNotifications.requestPermissions();
+            if (perm && perm.display === 'granted') {
+                await window.LocalNotifications.schedule({
+                    notifications: [
+                        {
+                            id: id || Date.now(),
+                            title: title || 'TeaShop',
+                            body: message || '',
+                        },
+                    ],
+                });
+                return;
+            }
+        }
+
+        // Fallback: Android WebView JS interface if running inside custom Android shell
         if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
-            window.AndroidLocationNotifier.showSimple(title, message);
+            window.AndroidLocationNotifier.showSimple(title || 'TeaShop', message || '');
         }
     } catch (e) {
         console.warn('notifyMobile failed', e);
