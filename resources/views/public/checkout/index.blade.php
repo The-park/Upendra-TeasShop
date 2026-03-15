@@ -495,6 +495,53 @@
         let customerLng = localStorage.getItem('teashop_customer_lng') || null;
         let customerAddress = localStorage.getItem('teashop_customer_address') || null;
         
+        // Fallback notifyMobile definition for this standalone page (in case app.js wasn't loaded)
+        if (typeof window.notifyMobile === 'undefined') {
+            window.notifyMobile = async function(title, message, id) {
+                try {
+                    const notifTitle = title || 'TeaShop';
+                    const notifBody  = message || '';
+
+                    // Try Capacitor Local Notifications if available
+                    let plugin = null;
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+                        plugin = window.Capacitor.Plugins.LocalNotifications;
+                    }
+                    if (plugin && plugin.requestPermissions && plugin.schedule) {
+                        const perm = await plugin.requestPermissions();
+                        const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
+                        if (granted) {
+                            await plugin.schedule({
+                                notifications: [{ id: id || Date.now(), title: notifTitle, body: notifBody }]
+                            });
+                            return;
+                        }
+                    }
+
+                    // Fallback: Android JS bridge
+                    if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
+                        window.AndroidLocationNotifier.showSimple(notifTitle, notifBody);
+                        return;
+                    }
+
+                    // Browser Notifications when viewed in Chrome
+                    if (typeof Notification !== 'undefined') {
+                        if (Notification.permission === 'granted') {
+                            new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
+                        } else if (Notification.permission === 'default') {
+                            Notification.requestPermission().then(p => {
+                                if (p === 'granted') {
+                                    new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
+                                }
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('notifyMobile (checkout fallback) failed', e);
+                }
+            };
+        }
+
         $(document).ready(function() {
             loadOrderItems();
             updateOrderSummary();

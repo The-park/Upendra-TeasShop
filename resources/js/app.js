@@ -53,16 +53,28 @@ window.showToast = function(type, message) {
 // Mobile notification helper: prefers Capacitor LocalNotifications, falls back to Android bridge
 window.notifyMobile = async function(title, message, id) {
     try {
-        // Prefer Capacitor Local Notifications when available (works on Android & iOS apps)
+        const notifTitle = title || 'TeaShop';
+        const notifBody  = message || '';
+
+        // Detect Capacitor LocalNotifications plugin (either via ESM import or global Capacitor.Plugins)
+        let plugin = null;
         if (window.LocalNotifications && typeof window.LocalNotifications.requestPermissions === 'function') {
-            const perm = await window.LocalNotifications.requestPermissions();
-            if (perm && perm.display === 'granted') {
-                await window.LocalNotifications.schedule({
+            plugin = window.LocalNotifications;
+        } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+            plugin = window.Capacitor.Plugins.LocalNotifications;
+        }
+
+        if (plugin && typeof plugin.requestPermissions === 'function' && typeof plugin.schedule === 'function') {
+            const perm = await plugin.requestPermissions();
+            // On Android, perm may be { display: 'granted' } or just 'granted'
+            const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
+            if (granted) {
+                await plugin.schedule({
                     notifications: [
                         {
                             id: id || Date.now(),
-                            title: title || 'TeaShop',
-                            body: message || '',
+                            title: notifTitle,
+                            body: notifBody,
                         },
                     ],
                 });
@@ -72,7 +84,21 @@ window.notifyMobile = async function(title, message, id) {
 
         // Fallback: Android WebView JS interface if running inside custom Android shell
         if (window.AndroidLocationNotifier && typeof window.AndroidLocationNotifier.showSimple === 'function') {
-            window.AndroidLocationNotifier.showSimple(title || 'TeaShop', message || '');
+            window.AndroidLocationNotifier.showSimple(notifTitle, notifBody);
+            return;
+        }
+
+        // Final fallback: browser Notification API (when testing in Chrome)
+        if (typeof Notification !== 'undefined') {
+            if (Notification.permission === 'granted') {
+                new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
+            } else if (Notification.permission === 'default') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') {
+                        new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
+                    }
+                });
+            }
         }
     } catch (e) {
         console.warn('notifyMobile failed', e);
