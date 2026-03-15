@@ -1,0 +1,12 @@
+{
+  "appId": "com.byteperday.teashop",
+  "appName": "TeaShop",
+  "webDir": "public",
+  "server": {
+    "url": "https://teashop.byteperday.com",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
