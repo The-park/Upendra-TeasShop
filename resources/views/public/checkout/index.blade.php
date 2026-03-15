@@ -271,6 +271,24 @@
                             <p class="mt-2">Loading your order...</p>
                         </div>
                     </div>
+
+                    <!-- Location Prompt -->
+                    <div class="mt-4 p-3 border rounded" id="locationSection">
+                        <h6 class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Your Location</h6>
+                        <p class="text-muted mb-2" id="locationStatus">We don't have your location yet. Share it for accurate order delivery or table pinpoint.</p>
+                        <div id="locationControls">
+                            <button id="requestLocationBtn" class="btn btn-outline-primary btn-sm" onclick="requestLocation()">
+                                <i class="fas fa-location-arrow me-2"></i>Share my location
+                            </button>
+                            <button id="openMapsBtn" class="btn btn-outline-secondary btn-sm" style="display:none;margin-left:8px;" onclick="openInMaps()">
+                                <i class="fas fa-map me-2"></i>Open in Maps
+                            </button>
+                        </div>
+                        <div id="locationDisplay" style="margin-top:12px;display:none;">
+                            <div id="mapWrap" style="height:200px;border-radius:8px;overflow:hidden;border:1px solid #e9ecef"></div>
+                            <div class="mt-2 text-muted small" id="locationCoords"></div>
+                        </div>
+                    </div>
                     
                     <div class="text-end mt-4">
                         <button class="btn btn-primary" onclick="nextStep(2)">
@@ -472,6 +490,10 @@
             }));
         }
         let selectedPayment = null;
+        // Location state
+        let customerLat = localStorage.getItem('teashop_customer_lat') || null;
+        let customerLng = localStorage.getItem('teashop_customer_lng') || null;
+        let customerAddress = localStorage.getItem('teashop_customer_address') || null;
         
         $(document).ready(function() {
             loadOrderItems();
@@ -482,7 +504,97 @@
                 window.location.href = '{{ route("public.menu") }}';
                 return;
             }
+
+            // Initialize location UI
+            initLocationUI();
         });
+
+        function initLocationUI() {
+            if (customerLat && customerLng) {
+                $('#locationStatus').text('Location captured.');
+                showLocationDisplay(customerLat, customerLng, customerAddress);
+            } else {
+                $('#locationStatus').text("We don't have your location yet. Share it for accurate order delivery or table pinpoint.");
+                $('#locationDisplay').hide();
+            }
+        }
+
+        async function requestLocation() {
+            $('#requestLocationBtn').prop('disabled', true).text('Requesting...');
+
+            // Try Capacitor Geolocation plugin first (when running inside the app)
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+                    const { Geolocation } = window.Capacitor.Plugins;
+                    // request permissions if plugin supports it
+                    if (Geolocation.requestPermissions) {
+                        await Geolocation.requestPermissions();
+                    }
+                    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+                    handleLocationSuccess(pos.coords.latitude, pos.coords.longitude);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Capacitor Geolocation failed, falling back to browser API', err);
+            }
+
+            // Browser fallback
+            if (!navigator.geolocation) {
+                showAlert('Geolocation is not supported by your browser.', 'error', 'Location Unavailable');
+                $('#requestLocationBtn').prop('disabled', false).text('Share my location');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+                handleLocationSuccess(position.coords.latitude, position.coords.longitude);
+            }, function(error) {
+                console.error('Geolocation error', error);
+                showAlert('Unable to get your location. Please enable location services and try again.', 'error', 'Location Error');
+                $('#requestLocationBtn').prop('disabled', false).text('Share my location');
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+
+        async function handleLocationSuccess(lat, lng) {
+            customerLat = lat;
+            customerLng = lng;
+            localStorage.setItem('teashop_customer_lat', lat);
+            localStorage.setItem('teashop_customer_lng', lng);
+            $('#locationStatus').text('Location acquired.');
+            $('#requestLocationBtn').prop('disabled', false).text('Share my location');
+
+            // Try reverse geocoding with Nominatim (OpenStreetMap) to obtain a friendly address
+            customerAddress = null;
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    customerAddress = data.display_name || null;
+                    if (customerAddress) {
+                        localStorage.setItem('teashop_customer_address', customerAddress);
+                    }
+                }
+            } catch (err) {
+                console.warn('Reverse geocode failed', err);
+            }
+
+            showLocationDisplay(lat, lng, customerAddress);
+        }
+
+        function showLocationDisplay(lat, lng, address) {
+            $('#locationDisplay').show();
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+            $('#mapWrap').html(`<iframe width="100%" height="100%" frameborder="0" style="border:0" src="${mapUrl}" allowfullscreen></iframe>`);
+            $('#locationCoords').text(address ? address + ` — (${lat.toFixed(6)}, ${lng.toFixed(6)})` : `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            $('#openMapsBtn').show().data('lat', lat).data('lng', lng);
+        }
+
+        function openInMaps() {
+            const lat = $('#openMapsBtn').data('lat');
+            const lng = $('#openMapsBtn').data('lng');
+            if (!lat || !lng) return;
+            const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            window.open(url, '_blank');
+        }
         
         function loadOrderItems() {
             let html = '';
@@ -667,6 +779,9 @@
                 notes:           $('#orderNotes').val().trim(),
                 payment_method:  selectedPayment,
                 table_number:    '{{ session('selected_table_number', '') }}',
+                customer_lat:    customerLat || '',
+                customer_lng:    customerLng || '',
+                customer_address: customerAddress || '',
                 items:           cart,   // fallback: server reads session cart first, then these
                 _token:          '{{ csrf_token() }}'
             };
