@@ -157,6 +157,21 @@ class OrderController extends Controller
         Session::forget('selected_table_id');
         Session::forget('selected_table_number');
 
+        // Fire push notification to all registered devices (e.g. for kitchen/admin app)
+        try {
+            app(\App\Services\FcmService::class)->sendToAll(
+                'New TeaShop Order',
+                'Order '.$order->order_number.' placed at table '.$table->table_number,
+                [
+                    'order_id'      => $order->id,
+                    'order_number'  => $order->order_number,
+                    'table_number'  => $table->table_number,
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Log::error('Failed to send FCM push: '.$e->getMessage());
+        }
+
         $redirectUrl = route('order.success', $order->order_number);
 
         if ($request->wantsJson() || $request->ajax()) {

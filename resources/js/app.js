@@ -4,6 +4,8 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import $ from 'jquery';
 // Capacitor Local Notifications for mobile app
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 // Expose Bootstrap globally so inline/blade scripts can call bootstrap.Modal etc.
 window.bootstrap = bootstrap;
@@ -104,6 +106,67 @@ window.notifyMobile = async function(title, message, id) {
         console.warn('notifyMobile failed', e);
     }
 };
+
+// Push Notifications (FCM) registration for native app
+async function initPushNotifications() {
+    try {
+        if (!Capacitor.isNativePlatform || !Capacitor.isNativePlatform()) {
+            return;
+        }
+
+        const platform = Capacitor.getPlatform ? Capacitor.getPlatform() : 'unknown';
+        if (platform !== 'android') {
+            return;
+        }
+
+        const perm = await PushNotifications.requestPermissions();
+        if (perm.receive !== 'granted') {
+            console.warn('Push notification permission not granted', perm);
+            return;
+        }
+
+        await PushNotifications.register();
+
+        PushNotifications.addListener('registration', async (token) => {
+            try {
+                // Stable device id stored locally
+                let deviceId = localStorage.getItem('teashop_device_id');
+                if (!deviceId) {
+                    deviceId = 'device-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+                    localStorage.setItem('teashop_device_id', deviceId);
+                }
+
+                await fetch('/api/push/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'X-Device-Id': deviceId,
+                    },
+                    body: JSON.stringify({
+                        token: token.value,
+                        platform,
+                        device_id: deviceId,
+                    }),
+                });
+            } catch (e) {
+                console.warn('Failed to register push token', e);
+            }
+        });
+
+        PushNotifications.addListener('registrationError', (err) => {
+            console.error('Push registration error', err);
+        });
+    } catch (e) {
+        console.warn('initPushNotifications failed', e);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPushNotifications);
+} else {
+    initPushNotifications();
+}
 
 // Loading Button Helper
 window.setButtonLoading = function(button, loading = true) {
