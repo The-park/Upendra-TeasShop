@@ -4,8 +4,6 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import $ from 'jquery';
 // Capacitor Local Notifications for mobile app
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { Capacitor } from '@capacitor/core';
 
 // Expose Bootstrap globally so inline/blade scripts can call bootstrap.Modal etc.
 window.bootstrap = bootstrap;
@@ -52,11 +50,50 @@ window.showToast = function(type, message) {
     });
 };
 
+// Ensure notification permission is requested from a user gesture
+window.ensureNotificationPermission = async function() {
+    try {
+        const stored = localStorage.getItem('teashop_notif_perm');
+        if (stored === 'granted') return true;
+
+        // Prefer Capacitor LocalNotifications if available
+        let plugin = null;
+        if (window.LocalNotifications && typeof window.LocalNotifications.requestPermissions === 'function') {
+            plugin = window.LocalNotifications;
+        } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+            plugin = window.Capacitor.Plugins.LocalNotifications;
+        }
+
+        if (plugin && typeof plugin.requestPermissions === 'function') {
+            const perm = await plugin.requestPermissions();
+            const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
+            if (granted) {
+                localStorage.setItem('teashop_notif_perm', 'granted');
+                return true;
+            }
+        }
+
+        // Browser Notifications permission (must be called from user gesture)
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+            const p = await Notification.requestPermission();
+            if (p === 'granted') {
+                localStorage.setItem('teashop_notif_perm', 'granted');
+                return true;
+            }
+        }
+    } catch (e) {
+        console.warn('ensureNotificationPermission failed', e);
+    }
+    return false;
+};
+
 // Mobile notification helper: prefers Capacitor LocalNotifications, falls back to Android bridge
 window.notifyMobile = async function(title, message, id) {
     try {
         const notifTitle = title || 'TeaShop';
         const notifBody  = message || '';
+
+        const allowed = localStorage.getItem('teashop_notif_perm') === 'granted';
 
         // Detect Capacitor LocalNotifications plugin (either via ESM import or global Capacitor.Plugins)
         let plugin = null;
@@ -66,22 +103,17 @@ window.notifyMobile = async function(title, message, id) {
             plugin = window.Capacitor.Plugins.LocalNotifications;
         }
 
-        if (plugin && typeof plugin.requestPermissions === 'function' && typeof plugin.schedule === 'function') {
-            const perm = await plugin.requestPermissions();
-            // On Android, perm may be { display: 'granted' } or just 'granted'
-            const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
-            if (granted) {
-                await plugin.schedule({
-                    notifications: [
-                        {
-                            id: id || Date.now(),
-                            title: notifTitle,
-                            body: notifBody,
-                        },
-                    ],
-                });
-                return;
-            }
+        if (plugin && typeof plugin.schedule === 'function' && allowed) {
+            await plugin.schedule({
+                notifications: [
+                    {
+                        id: id || Date.now(),
+                        title: notifTitle,
+                        body: notifBody,
+                    },
+                ],
+            });
+            return;
         }
 
         // Fallback: Android WebView JS interface if running inside custom Android shell
@@ -91,82 +123,15 @@ window.notifyMobile = async function(title, message, id) {
         }
 
         // Final fallback: browser Notification API (when testing in Chrome)
-        if (typeof Notification !== 'undefined') {
+        if (typeof Notification !== 'undefined' && allowed) {
             if (Notification.permission === 'granted') {
                 new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
-            } else if (Notification.permission === 'default') {
-                Notification.requestPermission().then(p => {
-                    if (p === 'granted') {
-                        new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
-                    }
-                });
             }
         }
     } catch (e) {
         console.warn('notifyMobile failed', e);
     }
 };
-
-// Push Notifications (FCM) registration for native app
-async function initPushNotifications() {
-    try {
-        if (!Capacitor.isNativePlatform || !Capacitor.isNativePlatform()) {
-            return;
-        }
-
-        const platform = Capacitor.getPlatform ? Capacitor.getPlatform() : 'unknown';
-        if (platform !== 'android') {
-            return;
-        }
-
-        const perm = await PushNotifications.requestPermissions();
-        if (perm.receive !== 'granted') {
-            console.warn('Push notification permission not granted', perm);
-            return;
-        }
-
-        await PushNotifications.register();
-
-        PushNotifications.addListener('registration', async (token) => {
-            try {
-                // Stable device id stored locally
-                let deviceId = localStorage.getItem('teashop_device_id');
-                if (!deviceId) {
-                    deviceId = 'device-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-                    localStorage.setItem('teashop_device_id', deviceId);
-                }
-
-                await fetch('/api/push/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'X-Device-Id': deviceId,
-                    },
-                    body: JSON.stringify({
-                        token: token.value,
-                        platform,
-                        device_id: deviceId,
-                    }),
-                });
-            } catch (e) {
-                console.warn('Failed to register push token', e);
-            }
-        });
-
-        PushNotifications.addListener('registrationError', (err) => {
-            console.error('Push registration error', err);
-        });
-    } catch (e) {
-        console.warn('initPushNotifications failed', e);
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPushNotifications);
-} else {
-    initPushNotifications();
-}
 
 // Loading Button Helper
 window.setButtonLoading = function(button, loading = true) {
@@ -437,12 +402,15 @@ $(document).ready(function() {
     setupFormValidation();
     
     // Setup add to cart buttons
-    $(document).on('click', '.add-to-cart', function(e) {
+    $(document).on('click', '.add-to-cart', async function(e) {
         e.preventDefault();
         const $btn = $(this);
         const productId = $btn.data('id');
         const productName = $btn.data('name');
         const productPrice = $btn.data('price');
+
+        // Request notification permission from the user gesture
+        await window.ensureNotificationPermission();
         
         TeaShopCart.addItem(productId, productName, productPrice);
     });

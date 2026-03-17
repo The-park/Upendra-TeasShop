@@ -497,27 +497,55 @@
         let customerLng = localStorage.getItem('teashop_customer_lng') || null;
         let customerAddress = localStorage.getItem('teashop_customer_address') || null;
         
-        // Fallback notifyMobile definition for this standalone page (in case app.js wasn't loaded)
+        // Fallback notifyMobile + permission helper for this standalone page (in case app.js wasn't loaded)
         if (typeof window.notifyMobile === 'undefined') {
+            window.ensureNotificationPermission = async function() {
+                try {
+                    const stored = localStorage.getItem('teashop_notif_perm');
+                    if (stored === 'granted') return true;
+
+                    let plugin = null;
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+                        plugin = window.Capacitor.Plugins.LocalNotifications;
+                    }
+                    if (plugin && plugin.requestPermissions) {
+                        const perm = await plugin.requestPermissions();
+                        const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
+                        if (granted) {
+                            localStorage.setItem('teashop_notif_perm', 'granted');
+                            return true;
+                        }
+                    }
+
+                    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+                        const p = await Notification.requestPermission();
+                        if (p === 'granted') {
+                            localStorage.setItem('teashop_notif_perm', 'granted');
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('ensureNotificationPermission (checkout) failed', e);
+                }
+                return false;
+            };
+
             window.notifyMobile = async function(title, message, id) {
                 try {
                     const notifTitle = title || 'TeaShop';
                     const notifBody  = message || '';
+                    const allowed = localStorage.getItem('teashop_notif_perm') === 'granted';
 
                     // Try Capacitor Local Notifications if available
                     let plugin = null;
                     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
                         plugin = window.Capacitor.Plugins.LocalNotifications;
                     }
-                    if (plugin && plugin.requestPermissions && plugin.schedule) {
-                        const perm = await plugin.requestPermissions();
-                        const granted = (perm && (perm.display === 'granted' || perm === 'granted'));
-                        if (granted) {
-                            await plugin.schedule({
-                                notifications: [{ id: id || Date.now(), title: notifTitle, body: notifBody }]
-                            });
-                            return;
-                        }
+                    if (plugin && plugin.schedule && allowed) {
+                        await plugin.schedule({
+                            notifications: [{ id: id || Date.now(), title: notifTitle, body: notifBody }]
+                        });
+                        return;
                     }
 
                     // Fallback: Android JS bridge
@@ -527,15 +555,9 @@
                     }
 
                     // Browser Notifications when viewed in Chrome
-                    if (typeof Notification !== 'undefined') {
+                    if (typeof Notification !== 'undefined' && allowed) {
                         if (Notification.permission === 'granted') {
                             new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
-                        } else if (Notification.permission === 'default') {
-                            Notification.requestPermission().then(p => {
-                                if (p === 'granted') {
-                                    new Notification(notifTitle, { body: notifBody, icon: '/favicon.ico' });
-                                }
-                            });
                         }
                     }
                 } catch (e) {
@@ -569,6 +591,9 @@
         }
 
         async function requestLocation() {
+            if (window.ensureNotificationPermission) {
+                await window.ensureNotificationPermission();
+            }
             $('#requestLocationBtn').prop('disabled', true).text('Requesting...');
 
             // Try Capacitor Geolocation plugin first (when running inside the app)
@@ -807,7 +832,10 @@
             }
         }
         
-        function placeOrder() {
+        async function placeOrder() {
+            if (window.ensureNotificationPermission) {
+                await window.ensureNotificationPermission();
+            }
             // Validate all required fields
             const name = $('#customerName').val().trim();
             const phone = $('#customerPhone').val().trim();

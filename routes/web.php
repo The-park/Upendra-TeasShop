@@ -9,7 +9,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\PushTokenController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -54,9 +53,6 @@ Route::prefix('order')->name('order.')->group(function () {
 
 // Public order placement (alias)
 Route::post('/place-order', [OrderController::class, 'place'])->name('public.place-order');
-
-// Push notification token registration (called from mobile app)
-Route::post('/api/push/register', [PushTokenController::class, 'register']);
 
 // Public order status
 Route::get('/order/{orderNumber}/status', [OrderController::class, 'getStatus'])->name('public.order.status');
