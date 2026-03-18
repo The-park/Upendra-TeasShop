@@ -95,8 +95,6 @@ Route::middleware(['auth', 'verified', 'role:admin,manager'])->prefix('admin')->
         Route::post('{order}/update-status', [OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('{order}/mark-paid', [OrderController::class, 'markPaid'])->name('mark-paid');
         Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-('{order}/mark-paid', [OrderController::class, 'markPaid'])->name('mark-paid');
-        Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
     });
     
     // Settings
