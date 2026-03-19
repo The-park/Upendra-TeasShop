@@ -157,10 +157,6 @@ class OrderController extends Controller
         Session::forget('selected_table_id');
         Session::forget('selected_table_number');
 
-        // After successfully placing an order, flash a flag so the
-        // success page can automatically start the post-order mini-game.
-        Session::flash('play_game_after_order', true);
-
         $redirectUrl = route('order.success', $order->order_number);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -179,9 +175,7 @@ class OrderController extends Controller
             ->with(['orderItems.product', 'table'])
             ->firstOrFail();
 
-        $playGame = Session::pull('play_game_after_order', false);
-
-        return view('public.order.status', compact('order', 'playGame'));
+        return view('public.order.status', compact('order'));
     }
 
     /**
@@ -246,10 +240,31 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,preparing,ready,served,cancelled'
         ]);
 
-        $order->update([
+        $payload = [
             'status' => $request->status,
             'updated_at' => now()
-        ]);
+        ];
+
+        if ($request->status === 'served') {
+            $payload['served_at'] = now();
+        }
+
+        if ($request->status === 'cancelled') {
+            $payload['cancelled_at'] = now();
+        }
+
+        $order->update($payload);
+
+        // If the order is completed or cancelled, free up the table
+        if (in_array($request->status, ['served', 'cancelled'])) {
+            try {
+                if ($order->table) {
+                    $order->table->update(['status' => 'available']);
+                }
+            } catch (\Exception $e) {
+                // non-fatal: table release failed, but order status still updated
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -302,7 +317,20 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $order->update(['status' => 'cancelled']);
+        $order->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        // release the table if assigned
+        try {
+            if ($order->table) {
+                $order->table->update(['status' => 'available']);
+            }
+        } catch (\Exception $e) {
+            // ignore table update failures
+        }
 
         return response()->json([
             'success' => true,

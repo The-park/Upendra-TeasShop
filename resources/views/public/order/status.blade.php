@@ -181,6 +181,41 @@
             padding: 1.5rem;
             text-align: center;
         }
+
+        /* Mini game styles */
+        .order-game-section {
+            margin-top: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .order-game-wrapper {
+            max-width: 380px;
+            margin: 0 auto;
+            border-radius: 24px;
+            padding: 12px;
+            background: radial-gradient(circle at top, #ffecd2 0%, #fcb69f 25%, #f6d365 60%, #fda085 100%);
+            box-shadow: 0 18px 35px rgba(0,0,0,0.25);
+        }
+
+        .order-game-frame {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 40%, #4facfe 70%, #00f2fe 100%);
+            aspect-ratio: 9 / 16;
+        }
+
+        #orderMiniGame {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .order-game-caption {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.75rem;
+        }
         
         @media (max-width: 768px) {
             .success-header {
@@ -213,6 +248,18 @@
     <div class="container my-5">
         @if(isset($order))
             <div class="row">
+                <!-- Mini Game Section -->
+                <div class="col-12 order-game-section">
+                    <h4 class="text-center mb-3">Tea Drop Mini Game</h4>
+                    <p class="text-center text-muted mb-3">Your order is placed! Watch the tea ball drop through the stack while we prepare your drinks.</p>
+                    <div class="order-game-wrapper">
+                        <div class="order-game-frame">
+                            <canvas id="orderMiniGame"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-center order-game-caption">Tip: Tap or click on the game to make the ball drop faster and smash through plates.</p>
+                </div>
+
                 {{-- Cash payment notice --}}
                 @if($order->payment_status !== 'paid')
                 <div class="col-12 mb-3">
@@ -508,23 +555,307 @@
         </script>
     @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Helix mini-game assets -->
-    <link rel="stylesheet" href="/css/helixGame.css">
-    <script src="/js/helixGame.js"></script>
-
-    <!-- Game launcher: auto-start when arriving from a fresh order -->
     <script>
-        (function(){
-            var play = {{ isset($playGame) && $playGame ? 'true' : 'false' }};
-            if (play) {
-                // show overlay and start game
-                window.addEventListener('load', function () {
-                    HelixGame.show();
-                    HelixGame.start();
+        (function() {
+            const canvas = document.getElementById('orderMiniGame');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            let width, height;
+
+            function resize() {
+                const frame = canvas.parentElement;
+                const rect = frame.getBoundingClientRect();
+                width = rect.width * window.devicePixelRatio;
+                height = rect.height * window.devicePixelRatio;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            resize();
+            window.addEventListener('resize', resize);
+
+            const towerLevels = 10;
+            const pillarX = () => width * 0.5;
+            const pillarTop = () => height * 0.08;
+            const pillarBottom = () => height * 0.92;
+            const platformSpacing = () => (pillarBottom() - pillarTop()) / (towerLevels + 1);
+
+            const platforms = [];
+            const colors = ['#ff7043', '#26a69a', '#42a5f5', '#ab47bc', '#ffee58'];
+
+            for (let i = 0; i < towerLevels; i++) {
+                platforms.push({
+                    yFactor: (i + 1) / (towerLevels + 1),
+                    broken: false,
+                    color: colors[i % colors.length],
+                    pieces: []
                 });
             }
+
+            const ball = {
+                y: pillarTop(),
+                radius: 14,
+                vy: 0,
+                gravity: 0.0018,
+                bounce: -0.8,
+                fastDrop: false,
+                color: '#1e88e5',
+                trail: []
+            };
+
+            let rotation = 0;
+            let lastTime = performance.now();
+            let completed = false;
+            let levelLabelAlpha = 0;
+
+            function worldY(p) {
+                return pillarTop() + (pillarBottom() - pillarTop()) * p.yFactor;
+            }
+
+            function drawBackground() {
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#ff9a9e');
+                gradient.addColorStop(0.35, '#fad0c4');
+                gradient.addColorStop(0.7, '#fbc2eb');
+                gradient.addColorStop(1, '#a18cd1');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                for (let i = 0; i < 30; i++) {
+                    const r = 2 + Math.random() * 3;
+                    const x = Math.random() * width;
+                    const y = Math.random() * height;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawPillar() {
+                const x = pillarX();
+                const top = pillarTop();
+                const bottom = pillarBottom();
+                const radius = width * 0.08;
+
+                const grad = ctx.createLinearGradient(x - radius, top, x + radius, bottom);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(1, '#e0f2f1');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect(x - radius, top, radius * 2, bottom - top, radius);
+                ctx.fill();
+            }
+
+            function drawPlatform(p) {
+                if (p.broken && p.pieces.length === 0) return;
+                const y = worldY(p);
+                const baseWidth = width * 0.55;
+                const baseHeight = height * 0.03;
+
+                if (!p.broken) {
+                    ctx.save();
+                    ctx.translate(pillarX(), y);
+                    ctx.rotate(rotation);
+
+                    const segmentCount = 16;
+                    const gapSize = 3; // leaves a small opening
+                    const dangerIndex = (p.index ?? 0) % segmentCount;
+
+                    for (let i = 0; i < segmentCount; i++) {
+                        if (i >= dangerIndex && i < dangerIndex + gapSize) continue;
+                        const angle = (i / segmentCount) * Math.PI * 2;
+                        const segWidth = baseWidth / segmentCount * 1.1;
+
+                        ctx.save();
+                        ctx.rotate(angle);
+                        ctx.translate(baseWidth * 0.25, 0);
+                        ctx.fillStyle = i === dangerIndex ? '#212121' : p.color;
+                        ctx.beginPath();
+                        ctx.roundRect(-segWidth / 2, -baseHeight / 2, segWidth, baseHeight, 6);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    ctx.restore();
+                }
+
+                ctx.save();
+                p.pieces.forEach(piece => {
+                    ctx.translate(piece.x, piece.y);
+                    ctx.rotate(piece.rotation);
+                    ctx.fillStyle = piece.color;
+                    ctx.beginPath();
+                    ctx.roundRect(-piece.w / 2, -piece.h / 2, piece.w, piece.h, 4);
+                    ctx.fill();
+                    ctx.resetTransform();
+                });
+                ctx.restore();
+            }
+
+            function drawBall() {
+                ball.trail.forEach((t, i) => {
+                    const alpha = (i + 1) / (ball.trail.length + 1);
+                    const r = ball.radius * (0.4 + 0.6 * alpha);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                const x = pillarX();
+                const y = ball.y;
+
+                const grad = ctx.createRadialGradient(x - ball.radius * 0.4, y - ball.radius * 0.4, ball.radius * 0.2, x, y, ball.radius);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.2, '#bbdefb');
+                grad.addColorStop(1, ball.color);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(x, y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                const shadowY = Math.min(pillarBottom(), y + ball.radius * 1.9);
+                ctx.beginPath();
+                ctx.ellipse(pillarX(), shadowY, ball.radius * 1.4, ball.radius * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function drawHUD() {
+                ctx.save();
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = `${Math.round(height * 0.045)}px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('Level 1', width * 0.5, height * 0.08);
+
+                if (completed) {
+                    ctx.globalAlpha = levelLabelAlpha;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `${Math.round(height * 0.06)}px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+                    ctx.fillText('ORDER BONUS!', width * 0.5, height * 0.5 - height * 0.03);
+                    ctx.font = `${Math.round(height * 0.035)}px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+                    ctx.fillText('Thanks for ordering from TeaShop', width * 0.5, height * 0.5 + height * 0.03);
+                }
+                ctx.restore();
+            }
+
+            function spawnPieces(platform) {
+                platform.pieces = [];
+                const y = worldY(platform);
+                const pieceCount = 20;
+                const baseW = width * 0.05;
+                const baseH = height * 0.015;
+                for (let i = 0; i < pieceCount; i++) {
+                    const angle = (Math.random() * Math.PI * 2);
+                    const speed = 0.08 + Math.random() * 0.12;
+                    platform.pieces.push({
+                        x: pillarX(),
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 0.05,
+                        rotation: Math.random() * Math.PI * 2,
+                        rotationSpeed: (Math.random() - 0.5) * 0.2,
+                        w: baseW * (0.7 + Math.random() * 0.8),
+                        h: baseH * (0.7 + Math.random() * 0.8),
+                        color: platform.color,
+                        life: 1
+                    });
+                }
+            }
+
+            function updatePieces(dt) {
+                const g = 0.0025;
+                platforms.forEach(p => {
+                    p.pieces.forEach(piece => {
+                        piece.vy += g * dt;
+                        piece.x += piece.vx * dt * width;
+                        piece.y += piece.vy * dt * height;
+                        piece.rotation += piece.rotationSpeed * dt;
+                        piece.life -= 0.0015 * dt;
+                    });
+                    p.pieces = p.pieces.filter(piece => piece.life > 0 && piece.y < height + 40);
+                });
+            }
+
+            function findNextPlatform() {
+                for (let i = 0; i < platforms.length; i++) {
+                    const py = worldY(platforms[i]);
+                    if (!platforms[i].broken && py > ball.y) {
+                        return platforms[i];
+                    }
+                }
+                return null;
+            }
+
+            function gameLoop(timestamp) {
+                const dt = timestamp - lastTime;
+                lastTime = timestamp;
+
+                rotation += 0.0008 * dt;
+
+                const gravity = ball.fastDrop ? ball.gravity * 2.7 : ball.gravity;
+                ball.vy += gravity * dt * height;
+                ball.y += ball.vy * (dt / 16);
+
+                if (ball.y < pillarTop() + ball.radius * 1.2) {
+                    ball.y = pillarTop() + ball.radius * 1.2;
+                    if (ball.vy < 0) ball.vy *= ball.bounce;
+                }
+
+                const next = findNextPlatform();
+                if (next && !next.broken) {
+                    const py = worldY(next);
+                    if (ball.y + ball.radius >= py - 4 && ball.vy > 0) {
+                        next.broken = true;
+                        spawnPieces(next);
+                        ball.vy = ball.fastDrop ? ball.bounce * 0.3 : ball.bounce * 0.5;
+                        ball.y = py - ball.radius * 1.2;
+                        ball.color = next.color;
+                    }
+                }
+
+                const allBroken = platforms.every(p => p.broken || worldY(p) < pillarTop());
+                if (allBroken && !completed && ball.y > pillarBottom() - ball.radius * 1.5) {
+                    completed = true;
+                }
+
+                if (completed && levelLabelAlpha < 1) {
+                    levelLabelAlpha += dt * 0.0015;
+                    if (levelLabelAlpha > 1) levelLabelAlpha = 1;
+                }
+
+                ball.trail.push({ x: pillarX(), y: ball.y });
+                if (ball.trail.length > 15) ball.trail.shift();
+
+                updatePieces(dt);
+
+                ctx.save();
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                ctx.clearRect(0, 0, width, height);
+                drawBackground();
+                drawPillar();
+                platforms.forEach(drawPlatform);
+                drawBall();
+                drawHUD();
+                ctx.restore();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            canvas.addEventListener('pointerdown', function() {
+                ball.fastDrop = true;
+            });
+
+            canvas.addEventListener('pointerup', function() {
+                ball.fastDrop = false;
+            });
+
+            requestAnimationFrame(gameLoop);
         })();
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
