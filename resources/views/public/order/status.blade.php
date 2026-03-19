@@ -509,5 +509,22 @@
     @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Helix mini-game assets -->
+    <link rel="stylesheet" href="/css/helixGame.css">
+    <script src="/js/helixGame.js"></script>
+
+    <!-- Game launcher: auto-start when arriving from a fresh order -->
+    <script>
+        (function(){
+            var play = {{ isset($playGame) && $playGame ? 'true' : 'false' }};
+            if (play) {
+                // show overlay and start game
+                window.addEventListener('load', function () {
+                    HelixGame.show();
+                    HelixGame.start();
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

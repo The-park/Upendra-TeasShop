@@ -157,6 +157,10 @@ class OrderController extends Controller
         Session::forget('selected_table_id');
         Session::forget('selected_table_number');
 
+        // After successfully placing an order, flash a flag so the
+        // success page can automatically start the post-order mini-game.
+        Session::flash('play_game_after_order', true);
+
         $redirectUrl = route('order.success', $order->order_number);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -175,7 +179,9 @@ class OrderController extends Controller
             ->with(['orderItems.product', 'table'])
             ->firstOrFail();
 
-        return view('public.order.status', compact('order'));
+        $playGame = Session::pull('play_game_after_order', false);
+
+        return view('public.order.status', compact('order', 'playGame'));
     }
 
     /**
