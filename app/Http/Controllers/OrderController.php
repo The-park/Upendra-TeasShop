@@ -258,10 +258,8 @@ class OrderController extends Controller
         // If the order is completed or cancelled, free up the table
         if (in_array($request->status, ['served', 'cancelled'])) {
             try {
-                // Prefer direct update by table_id to avoid relying on loaded relation
-                if ($order->table_id) {
-                    \App\Models\RestaurantTable::where('id', $order->table_id)
-                        ->update(['status' => 'available']);
+                if ($order->table) {
+                    $order->table->update(['status' => 'available']);
                 }
             } catch (\Exception $e) {
                 // non-fatal: table release failed, but order status still updated
@@ -325,11 +323,10 @@ class OrderController extends Controller
             'updated_at' => now()
         ]);
 
-        // release the table if assigned (use direct update by table_id)
+        // release the table if assigned
         try {
-            if ($order->table_id) {
-                \App\Models\RestaurantTable::where('id', $order->table_id)
-                    ->update(['status' => 'available']);
+            if ($order->table) {
+                $order->table->update(['status' => 'available']);
             }
         } catch (\Exception $e) {
             // ignore table update failures

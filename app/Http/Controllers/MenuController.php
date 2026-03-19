@@ -52,9 +52,17 @@ class MenuController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Available tables for picker (active + available status)
+        // Available tables for picker (active + free of active orders)
+        // A table is considered available when:
+        //   - it is marked with a free/available-like status, OR
+        //   - it has no in-progress orders (pending/confirmed/preparing/ready)
         $availableTables = RestaurantTable::where('is_active', true)
-            ->whereIn('status', ['available', 'active', 'free'])
+            ->where(function ($query) {
+                $query->whereIn('status', ['available', 'active', 'free'])
+                      ->orWhereDoesntHave('orders', function ($sub) {
+                          $sub->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready']);
+                      });
+            })
             ->orderBy('table_number')
             ->get();
 
