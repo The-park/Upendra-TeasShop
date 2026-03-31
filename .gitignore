@@ -23,3 +23,16 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 instructions/Game_creation_file.md
+
+# Stack Ball Pro (nested Vite app)
+/Stack Ball Pro/node_modules/
+/Stack Ball Pro/dist/
+/Stack Ball Pro/dist-ssr/
+/Stack Ball Pro/coverage/
+/Stack Ball Pro/.nyc_output/
+/Stack Ball Pro/.vite/
+/Stack Ball Pro/.cache/
+/Stack Ball Pro/.eslintcache
+/Stack Ball Pro/*.tsbuildinfo
+/Stack Ball Pro/dev_startup_stdout.log
+/Stack Ball Pro/dev_startup_stderr.log

@@ -80,6 +80,7 @@ class OrderController extends Controller
             'customer_name'   => 'required|string|max:255',
             'customer_phone'  => 'nullable|string|max:20',
             'notes'           => 'nullable|string|max:500',
+            'payment_method'  => 'nullable|in:cash,card,digital',
         ]);
 
         $cart = Session::get('cart', []);
@@ -105,9 +106,17 @@ class OrderController extends Controller
 
         $table = RestaurantTable::where('table_number', $request->table_number)->first();
 
+        $paymentMethod = strtolower((string) $request->input('payment_method', 'cash'));
+        if (!in_array($paymentMethod, ['cash', 'card', 'digital'], true)) {
+            $paymentMethod = 'cash';
+        }
+
+        // Card/digital payments are treated as paid at checkout completion.
+        $paymentStatus = in_array($paymentMethod, ['card', 'digital'], true) ? 'paid' : 'unpaid';
+
         $order = null;
 
-        DB::transaction(function () use ($request, $cart, $table, &$order) {
+        DB::transaction(function () use ($request, $cart, $table, $paymentMethod, $paymentStatus, &$order) {
             $total = 0;
             $items = [];
 
@@ -133,8 +142,8 @@ class OrderController extends Controller
                 'subtotal'        => $total,
                 'total_amount'    => $total,
                 'status'          => 'pending',
-                'payment_status'  => 'unpaid',
-                'payment_method'  => $request->payment_method ?? 'cash',
+                'payment_status'  => $paymentStatus,
+                'payment_method'  => $paymentMethod,
             ]);
 
             foreach ($items as $item) {
@@ -187,6 +196,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => $order->status,
+            'payment_status' => $order->payment_status,
             'order_number' => $order->order_number,
             'updated_at' => $order->updated_at->toIso8601String()
         ]);

@@ -182,33 +182,34 @@
             text-align: center;
         }
 
-        /* Mini game styles */
         .order-game-section {
             margin-top: 2.5rem;
             margin-bottom: 2.5rem;
         }
 
         .order-game-wrapper {
-            max-width: 380px;
+            max-width: 410px;
             margin: 0 auto;
             border-radius: 24px;
-            padding: 12px;
-            background: radial-gradient(circle at top, #ffecd2 0%, #fcb69f 25%, #f6d365 60%, #fda085 100%);
-            box-shadow: 0 18px 35px rgba(0,0,0,0.25);
+            padding: 10px;
+            background: radial-gradient(circle at 20% 10%, #fff5f7 0%, #ffe5ec 45%, #ffc4d6 100%);
+            box-shadow: 0 20px 35px rgba(196, 69, 105, 0.25);
         }
 
         .order-game-frame {
             position: relative;
-            border-radius: 20px;
+            border-radius: 18px;
             overflow: hidden;
-            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 40%, #4facfe 70%, #00f2fe 100%);
             aspect-ratio: 9 / 16;
+            background: #fce5ee;
         }
 
-        #orderMiniGame {
+        .order-game-embed {
             width: 100%;
             height: 100%;
+            border: 0;
             display: block;
+            background: #fce5ee;
         }
 
         .order-game-caption {
@@ -217,150 +218,27 @@
             margin-top: 0.75rem;
         }
 
-        /* ── Stack Ball 3D Game Styles ── */
-        /* HUD Overlays */
-        #stackball-hud {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            z-index: 10;
-            padding: 14px 20px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            pointer-events: none;
-        }
-
-        #stackball-level-bar {
+        .order-game-locked {
+            background: #fff8e1;
+            border: 1.5px solid #ffe082;
+            border-radius: 14px;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            width: min(90%, 340px);
+            gap: 14px;
+            max-width: 680px;
+            margin: 0 auto;
         }
 
-        .stackball-lvl-badge {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-            background: var(--stackball-theme, #2980b9);
-            flex-shrink: 0;
-            transition: background 0.5s;
+        .order-game-locked h5 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+            color: #92400e;
         }
 
-        #stackball-bar-track {
-            flex: 1;
-            height: 9px;
-            background: rgba(255,255,255,0.25);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-
-        #stackball-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--stackball-theme, #2980b9);
-            border-radius: 99px;
-            transition: width 0.18s ease, background 0.5s;
-        }
-
-        #stackball-score {
-            font-size: 46px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.88);
-            letter-spacing: 3px;
-            text-shadow: 0 3px 12px rgba(0,0,0,0.35);
-            transition: transform 0.1s;
-        }
-
-        #stackball-score.pop {
-            transform: scale(1.2);
-        }
-
-        /* Overlays */
-        #stackball-overlay, #stackball-gameover {
-            position: absolute;
-            inset: 0;
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.25);
-            gap: 12px;
-            transition: opacity 0.3s;
-        }
-
-        #stackball-overlay.hidden, #stackball-gameover.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #stackball-overlay.show, #stackball-gameover.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        #stackball-ball-anim {
-            font-size: 88px;
-            color: #3498db;
-            animation: stackball-float 1.3s ease-in-out infinite alternate;
-        }
-
-        #stackball-overlay-msg {
-            font-size: 24px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 4px;
-        }
-
-        #stackball-go-score {
-            font-size: 72px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        #stackball-go-label {
-            font-size: 22px;
-            font-weight: 700;
-            color: #e74c3c;
-            letter-spacing: 3px;
-        }
-
-        #stackball-go-hint {
-            font-size: 14px;
-            color: rgba(255,255,255,0.6);
-            letter-spacing: 2px;
-        }
-
-        /* Multiplier Toast */
-        #stackball-multiplier-toast {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            z-index: 30;
-            font-size: 48px;
-            font-weight: 700;
-            color: #f1c40f;
-            text-shadow: 0 0 20px rgba(241,196,15,0.8);
-            transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #stackball-multiplier-toast.show {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
-
-        @keyframes stackball-float {
-            from { transform: translateY(0px); }
-            to { transform: translateY(-22px); }
+        .order-game-locked p {
+            color: #78350f;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -376,21 +254,12 @@
                 padding-left: 1rem;
             }
 
-            /* Stack Ball mobile adjustments */
-            #stackball-score {
-                font-size: 36px;
+            .order-game-wrapper {
+                max-width: 100%;
             }
 
-            #stackball-overlay-msg {
-                font-size: 20px;
-            }
-
-            #stackball-go-score {
-                font-size: 56px;
-            }
-
-            #stackball-level-bar {
-                width: 85%;
+            .order-game-locked {
+                padding: 14px 16px;
             }
         }
     </style>
@@ -413,39 +282,30 @@
             <div class="row">
                 <!-- Mini Game Section -->
                 <div class="col-12 order-game-section">
-                    <h4 class="text-center mb-3">Stack Ball 3D</h4>
-                    <p class="text-center text-muted mb-3">Your order is placed! Smash through the colored platforms while we prepare your drinks.</p>
+                    @if($order->payment_status === 'paid')
+                    <h4 class="text-center mb-3">Stack Ball Pro</h4>
+                    <p class="text-center text-muted mb-3">Payment received. Play while we prepare your order.</p>
                     <div class="order-game-wrapper">
                         <div class="order-game-frame">
-                            <canvas id="orderMiniGame"></canvas>
-
-                            <!-- Stack Ball HUD -->
-                            <div id="stackball-hud">
-                                <div id="stackball-level-bar">
-                                    <div class="stackball-lvl-badge" id="stackball-lvl-from">1</div>
-                                    <div id="stackball-bar-track">
-                                        <div id="stackball-bar-fill"></div>
-                                    </div>
-                                    <div class="stackball-lvl-badge" id="stackball-lvl-to">2</div>
-                                </div>
-                                <div id="stackball-score">0</div>
-                            </div>
-
-                            <!-- Start Screen -->
-                            <div id="stackball-overlay" class="show">
-                                <div id="stackball-ball-anim">●</div>
-                                <div id="stackball-overlay-msg">TAP TO PLAY</div>
-                            </div>
-
-                            <!-- Game Over Screen -->
-                            <div id="stackball-gameover" class="hidden">
-                                <div id="stackball-go-score">0</div>
-                                <div id="stackball-go-label">GAME OVER</div>
-                                <div id="stackball-go-hint">tap to retry</div>
-                            </div>
+                            <iframe
+                                class="order-game-embed"
+                                src="{{ asset('games/stack-ball-pro/index.html') }}"
+                                title="Stack Ball Pro"
+                                loading="lazy"
+                                allow="autoplay"
+                            ></iframe>
                         </div>
                     </div>
-                    <p class="text-center order-game-caption">Tap and hold to drop faster. Avoid black segments! Enter fire mode for chain-breaking.</p>
+                    <p class="text-center order-game-caption">Drag to rotate and hold to smash through soft slabs.</p>
+                    @else
+                    <div class="order-game-locked">
+                        <i class="fas fa-lock fa-2x" style="color:#f59e0b;flex-shrink:0;"></i>
+                        <div>
+                            <h5>Unlock Stack Ball Pro after payment</h5>
+                            <p class="mb-0">Complete your payment to start the game while your order is being prepared.</p>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 {{-- Cash payment notice --}}
@@ -742,12 +602,6 @@
             setTimeout(function() { location.reload(); }, 30000);
         </script>
     @endif
-
-    <!-- Three.js for Stack Ball Game -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
-    <!-- Stack Ball Game Module -->
-    <script type="module" src="{{ asset('js/games/stack-ball/main.js') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
