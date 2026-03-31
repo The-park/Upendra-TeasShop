@@ -226,18 +226,11 @@
                 <div class="step-number">1</div>
                 <div>
                     <h6 class="mb-0">Review Order</h6>
-                    <small class="text-muted">Check your items and table</small>
+                    <small class="text-muted">Check your items</small>
                 </div>
             </div>
             <div class="step" id="step2">
                 <div class="step-number">2</div>
-                <div>
-                    <h6 class="mb-0">Customer Info</h6>
-                    <small class="text-muted">Enter your details</small>
-                </div>
-            </div>
-            <div class="step" id="step3">
-                <div class="step-number">3</div>
                 <div>
                     <h6 class="mb-0">Payment</h6>
                     <small class="text-muted">Choose payment method</small>
@@ -251,18 +244,6 @@
                 <!-- Step 1: Order Review -->
                 <div class="checkout-card" id="orderReview">
                     <h4 class="mb-4">Order Review</h4>
-                    
-                    <!-- Table Information -->
-                    <div class="table-info">
-                        @php $tableNum = session('selected_table_number') ?? session('table_number'); @endphp
-                        @if($tableNum)
-                            <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Table {{ $tableNum }}</h5>
-                            <small>Your selected table</small>
-                        @else
-                            <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>No table selected</h5>
-                            <small><a href="{{ route('menu') }}" class="text-white">Go back and select a table</a></small>
-                        @endif
-                    </div>
                     
                     <!-- Order Items -->
                     <div id="orderItems">
@@ -278,49 +259,8 @@
                         </button>
                     </div>
                 </div>
-                
-                <!-- Step 2: Customer Information -->
-                <div class="checkout-card" id="customerInfo" style="display: none;">
-                    <h4 class="mb-4">Customer Information</h4>
-                    
-                    <form id="customerForm">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="customerName" placeholder="Full Name" required>
-                                    <label for="customerName">Full Name *</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="tel" class="form-control" id="customerPhone" placeholder="Phone Number" required>
-                                    <label for="customerPhone">Phone Number *</label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-floating">
-                            <input type="email" class="form-control" id="customerEmail" placeholder="Email Address">
-                            <label for="customerEmail">Email Address (optional)</label>
-                        </div>
-                        
-                        <div class="form-floating">
-                            <textarea class="form-control" id="orderNotes" placeholder="Special instructions" style="height: 100px;"></textarea>
-                            <label for="orderNotes">Special Instructions (optional)</label>
-                        </div>
-                    </form>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <button class="btn btn-outline-primary" onclick="previousStep(1)">
-                            <i class="fas fa-arrow-left me-2"></i>Back
-                        </button>
-                        <button class="btn btn-primary" onclick="validateAndNext(3)">
-                            Continue <i class="fas fa-arrow-right ms-2"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Step 3: Payment -->
+
+                <!-- Step 2: Payment -->
                 <div class="checkout-card" id="paymentMethod" style="display: none;">
                     <h4 class="mb-4">Payment Method</h4>
                     
@@ -370,9 +310,14 @@
                             Card payment processing will be handled securely. This is a demo implementation.
                         </div>
                     </div>
+
+                    <div class="form-floating mt-3">
+                        <textarea class="form-control" id="orderNotes" placeholder="Special instructions" style="height: 100px;"></textarea>
+                        <label for="orderNotes">Special Instructions (optional)</label>
+                    </div>
                     
                     <div class="d-flex justify-content-between mt-4">
-                        <button class="btn btn-outline-primary" onclick="previousStep(2)">
+                        <button class="btn btn-outline-primary" onclick="previousStep(1)">
                             <i class="fas fa-arrow-left me-2"></i>Back
                         </button>
                         <button class="btn btn-success btn-lg" onclick="placeOrder()">
@@ -472,6 +417,10 @@
             }));
         }
         let selectedPayment = null;
+        let customerProfile = {
+            name: (localStorage.getItem('teashop_customer_name') || '').trim(),
+            phone: (localStorage.getItem('teashop_customer_phone') || '').trim(),
+        };
         
         $(document).ready(function() {
             loadOrderItems();
@@ -481,6 +430,13 @@
             if (cart.length === 0) {
                 window.location.href = '{{ route("public.menu") }}';
                 return;
+            }
+
+            if (!customerProfile.name) {
+                showAlert('Please enter your username first on the menu page.', 'warning', 'Profile Required');
+                setTimeout(function () {
+                    window.location.href = '{{ route("public.menu") }}';
+                }, 900);
             }
         });
         
@@ -551,10 +507,6 @@
             if (step === 2) {
                 $('#step1').addClass('completed');
                 $('#step2').addClass('active');
-                $('#customerInfo').show();
-            } else if (step === 3) {
-                $('#step1, #step2').addClass('completed');
-                $('#step3').addClass('active');
                 $('#paymentMethod').show();
             }
         }
@@ -568,10 +520,6 @@
             if (step === 1) {
                 $('#step1').addClass('active');
                 $('#orderReview').show();
-            } else if (step === 2) {
-                $('#step1').addClass('completed');
-                $('#step2').addClass('active');
-                $('#customerInfo').show();
             }
         }
         
@@ -600,25 +548,6 @@
         }
         /* ────────────────────────────────────────────────────────────── */
 
-        function validateAndNext(step) {
-            const name = $('#customerName').val().trim();
-            const phone = $('#customerPhone').val().trim();
-            
-            if (!name || !phone) {
-                showAlert('Please fill in your full name and phone number to continue.', 'warning', 'Required Fields');
-                return;
-            }
-            
-            // Validate phone number (basic)
-            const phoneRegex = /^[\d\s\-\(\)\+]+$/;
-            if (!phoneRegex.test(phone)) {
-                showAlert('Please enter a valid phone number (digits, spaces, + and - only).', 'warning', 'Invalid Phone Number');
-                return;
-            }
-            
-            nextStep(step);
-        }
-        
         function selectPayment(method) {
             selectedPayment = method;
             
@@ -636,15 +565,13 @@
         }
         
         function placeOrder() {
-            // Validate all required fields
-            const name = $('#customerName').val().trim();
-            const phone = $('#customerPhone').val().trim();
-            
-            if (!name || !phone) {
-                showAlert('Please go back and complete your name and phone number.', 'warning', 'Missing Information');
-                previousStep(2);
+            if (!customerProfile.name) {
+                showAlert('Username is missing. Please return to menu and set your details.', 'warning', 'Missing Profile');
                 return;
             }
+
+            const name = customerProfile.name;
+            const phone = customerProfile.phone || '';
             
             if (!selectedPayment) {
                 showAlert('Please choose a payment method before placing your order.', 'warning', 'Payment Required');
@@ -663,10 +590,8 @@
             const orderData = {
                 customer_name:   name,
                 customer_phone:  phone,
-                customer_email:  $('#customerEmail').val().trim(),
                 notes:           $('#orderNotes').val().trim(),
                 payment_method:  selectedPayment,
-                table_number:    '{{ session('selected_table_number', '') }}',
                 items:           cart,   // fallback: server reads session cart first, then these
                 _token:          '{{ csrf_token() }}'
             };
@@ -677,8 +602,6 @@
                     if (response.success) {
                         // Clear cart
                         localStorage.removeItem('teashop_cart');
-                        localStorage.removeItem('teashop_table');
-                        localStorage.removeItem('teashop_table_number');
                         
                         // Redirect to success page
                         window.location.href = response.redirect_url;
@@ -688,7 +611,7 @@
                 })
                 .fail(function(xhr) {
                     console.error('Order submission failed:', xhr);
-                    const msg = xhr.responseJSON?.message || xhr.responseJSON?.errors?.table_number?.[0] || 'Something went wrong. Please try again.';
+                    const msg = xhr.responseJSON?.message || xhr.responseJSON?.errors?.customer_name?.[0] || 'Something went wrong. Please try again.';
                     showAlert(msg, 'error', 'Order Failed');
                 })
                 .always(function() {

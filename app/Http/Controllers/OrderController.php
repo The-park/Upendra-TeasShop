@@ -41,12 +41,7 @@ class OrderController extends Controller
             }
         }
 
-        // Get all active tables
-        $tables = RestaurantTable::where('is_active', true)
-            ->orderBy('table_number')
-            ->get();
-
-        return view('public.checkout.index', compact('cartItems', 'total', 'tables'));
+        return view('public.checkout.index', compact('cartItems', 'total'));
     }
 
     /**
@@ -76,7 +71,6 @@ class OrderController extends Controller
     public function place(Request $request)
     {
         $request->validate([
-            'table_number'    => 'required|exists:restaurant_tables,table_number',
             'customer_name'   => 'required|string|max:255',
             'customer_phone'  => 'nullable|string|max:20',
             'notes'           => 'nullable|string|max:500',
@@ -104,7 +98,32 @@ class OrderController extends Controller
             return redirect()->route('menu')->with('error', 'Your cart is empty.');
         }
 
-        $table = RestaurantTable::where('table_number', $request->table_number)->first();
+        $table = null;
+
+        if ($request->filled('table_number')) {
+            $table = RestaurantTable::where('table_number', $request->table_number)->first();
+        }
+
+        if (!$table && Session::has('selected_table_number')) {
+            $table = RestaurantTable::where('table_number', Session::get('selected_table_number'))->first();
+        }
+
+        if (!$table) {
+            $table = RestaurantTable::where('is_active', true)->orderBy('id')->first();
+        }
+
+        if (!$table) {
+            $table = RestaurantTable::firstOrCreate(
+                ['table_number' => 'ONLINE'],
+                [
+                    'table_name' => 'Online Orders',
+                    'capacity' => 1,
+                    'location' => 'Web',
+                    'status' => 'available',
+                    'is_active' => true,
+                ]
+            );
+        }
 
         $paymentMethod = strtolower((string) $request->input('payment_method', 'cash'));
         if (!in_array($paymentMethod, ['cash', 'card', 'digital'], true)) {

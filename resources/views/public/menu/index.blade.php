@@ -46,10 +46,10 @@
         .topbar-search input::placeholder { color: rgba(255,255,255,.45); }
         .topbar-search input:focus { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.4); }
         .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-        .table-badge { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; transition: background .2s; white-space: nowrap; }
-        .table-badge:hover { background: rgba(255,255,255,.22); }
-        .table-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #6db560; }
-        .table-badge.no-table .dot { background: #f0ad4e; }
+        .customer-badge { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.25); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: #fff; cursor: pointer; transition: background .2s; white-space: nowrap; max-width: 190px; }
+        .customer-badge:hover { background: rgba(255,255,255,.22); }
+        .customer-badge .avatar { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.26); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+        .customer-badge .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .cart-btn { position: relative; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.25); color: #fff; font-size: 19px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; flex-shrink: 0; }
         .cart-btn:hover { background: rgba(255,255,255,.25); }
         .cart-btn .cart-count { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: #e53935; border: 2px solid var(--tea-dark); font-size: 10px; font-weight: 700; color: #fff; display: none; align-items: center; justify-content: center; }
@@ -120,28 +120,24 @@
         .btn-checkout { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--tea-mid), var(--tea-accent)); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: opacity .2s; box-shadow: 0 4px 14px rgba(45,90,39,.35); }
         .btn-checkout:hover { opacity: .9; }
 
-        /* Table Picker */
-        .table-picker-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, rgba(26,58,26,.96), rgba(45,90,39,.98)); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .table-picker-overlay.hidden { display: none; }
-        .table-picker-card { background: #fff; border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.5); animation: slideUp .35s cubic-bezier(.4,0,.2,1); }
+        /* Customer Prompt */
+        .customer-prompt-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, rgba(26,58,26,.94), rgba(45,90,39,.96)); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .customer-prompt-overlay.hidden { display: none; }
+        .customer-prompt-card { background: #fff; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 30px 80px rgba(0,0,0,.5); overflow: hidden; animation: slideUp .35s cubic-bezier(.4,0,.2,1); }
         @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .tp-header { background: linear-gradient(135deg, var(--tea-dark), var(--tea-mid)); padding: 28px 28px 24px; text-align: center; }
-        .tp-header .tp-icon { width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin: 0 auto 16px; }
-        .tp-header h2 { color: #fff; font-size: 20px; font-weight: 700; margin: 0 0 6px; }
-        .tp-header p { color: rgba(255,255,255,.6); font-size: 13px; margin: 0; }
-        .tp-body { padding: 20px 24px 24px; flex: 1; overflow-y: auto; }
-        .tp-search { position: relative; margin-bottom: 16px; }
-        .tp-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 16px; }
-        .tp-search input { width: 100%; padding: 10px 14px 10px 38px; border: 1.5px solid #d0dbd0; border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif; outline: none; transition: border-color .2s; }
-        .tp-search input:focus { border-color: var(--tea-accent); }
-        .tp-tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-        .tp-table-btn { border: 1.5px solid #d0dbd0; border-radius: 12px; background: #fff; padding: 14px 8px; text-align: center; cursor: pointer; transition: all .18s; font-family: 'Inter', sans-serif; }
-        .tp-table-btn:hover { border-color: var(--tea-accent); background: var(--tea-pale); transform: translateY(-2px); }
-        .tp-table-btn .tbl-num { font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700; color: var(--tea-dark); display: block; margin-bottom: 4px; }
-        .tp-table-btn .tbl-label { font-size: 11px; color: #888; display: block; }
-        .tp-table-btn .tbl-loc { font-size: 10px; color: #aaa; display: block; margin-top: 2px; }
-        .tp-no-tables { text-align: center; padding: 30px; color: #aaa; }
-        .tp-no-tables i { font-size: 40px; display: block; margin-bottom: 10px; }
+        .customer-prompt-head { background: linear-gradient(135deg, var(--tea-dark), var(--tea-mid)); color: #fff; padding: 24px 26px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .customer-prompt-head h2 { font-size: 21px; margin: 0 0 4px; }
+        .customer-prompt-head p { margin: 0; font-size: 13px; color: rgba(255,255,255,.78); }
+        .customer-prompt-close { background: rgba(255,255,255,.2); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+        .customer-prompt-body { padding: 22px 24px 24px; }
+        .customer-prompt-field { margin-bottom: 14px; }
+        .customer-prompt-field label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #365236; }
+        .customer-prompt-field input { width: 100%; border: 1.5px solid #d0dbd0; border-radius: 12px; padding: 11px 13px; font-size: 14px; outline: none; }
+        .customer-prompt-field input:focus { border-color: var(--tea-accent); }
+        .customer-prompt-note { font-size: 12px; color: #7f8f7f; margin-bottom: 14px; }
+        .customer-prompt-actions { display: flex; justify-content: flex-end; }
+        .customer-prompt-actions button { border: none; border-radius: 12px; background: var(--tea-accent); color: #fff; padding: 10px 20px; font-weight: 600; font-size: 14px; }
+        .customer-prompt-actions button:hover { background: var(--tea-mid); }
 
         /* Toast */
         .toast-stack { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -165,43 +161,30 @@
 </head>
 <body>
 
-{{-- TABLE PICKER OVERLAY --}}
-<div class="table-picker-overlay {{ $selectedTableId ? 'hidden' : '' }}" id="tablePicker">
-    <div class="table-picker-card">
-        <div class="tp-header">
-            <div class="tp-icon"><i class="bi bi-grid-3x3-gap"></i></div>
-            <h2>Select Your Table</h2>
-            <p>Choose your table to browse the menu and place your order</p>
+{{-- Table picker flow disabled for web ordering. --}}
+
+<div class="customer-prompt-overlay hidden" id="customerPrompt">
+    <div class="customer-prompt-card">
+        <div class="customer-prompt-head">
+            <div>
+                <h2>Welcome</h2>
+                <p>Please share your name before placing an order.</p>
+            </div>
+            <button type="button" class="customer-prompt-close" id="customerPromptClose" onclick="closeCustomerPrompt()">&times;</button>
         </div>
-        <div class="tp-body">
-            <div class="tp-search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="tpSearch" placeholder="Search table number..." autocomplete="off">
+        <div class="customer-prompt-body">
+            <div class="customer-prompt-field">
+                <label for="customerPromptName">Username *</label>
+                <input type="text" id="customerPromptName" placeholder="Enter your name" maxlength="100" autocomplete="name">
             </div>
-            @if($availableTables->count() > 0)
-            <div class="tp-tables-grid" id="tpGrid">
-                @foreach($availableTables as $t)
-                <button class="tp-table-btn"
-                        data-id="{{ $t->id }}"
-                        data-num="{{ $t->table_number }}"
-                        data-name="{{ $t->table_name ?: 'Table '.$t->table_number }}"
-                        data-search="{{ strtolower($t->table_number.' '.($t->table_name ?? '').' '.($t->location ?? '')) }}">
-                    <span class="tbl-num">{{ $t->table_number }}</span>
-                    <span class="tbl-label">{{ $t->table_name ?: 'Table' }}</span>
-                    @if($t->capacity)
-                    <span class="tbl-loc"><i class="bi bi-people-fill"></i> {{ $t->capacity }}</span>
-                    @elseif($t->location)
-                    <span class="tbl-loc">{{ $t->location }}</span>
-                    @endif
-                </button>
-                @endforeach
+            <div class="customer-prompt-field">
+                <label for="customerPromptPhone">Phone Number (optional)</label>
+                <input type="tel" id="customerPromptPhone" placeholder="Enter phone number" maxlength="20" autocomplete="tel">
             </div>
-            @else
-            <div class="tp-no-tables">
-                <i class="bi bi-exclamation-circle"></i>
-                <p class="mb-0">No tables are currently available.<br><small>Please ask a staff member for assistance.</small></p>
+            <div class="customer-prompt-note">You can update these details any time from the top bar.</div>
+            <div class="customer-prompt-actions">
+                <button type="button" onclick="saveCustomerProfile()">Continue</button>
             </div>
-            @endif
         </div>
     </div>
 </div>
@@ -219,13 +202,9 @@
         </div>
     </div>
     <div class="topbar-actions">
-        <div class="table-badge {{ $selectedTableId ? '' : 'no-table' }}" id="tableBadge"
-             onclick="document.getElementById('tablePicker').classList.remove('hidden')" title="Change table">
-            <span class="dot"></span>
-            <span id="tableBadgeText">
-                @if($selectedTableId) Table {{ $selectedTableNumber }} @else Select Table @endif
-            </span>
-            <i class="bi bi-chevron-down" style="font-size:10px;opacity:.7;"></i>
+        <div class="customer-badge" id="customerBadge" onclick="openCustomerPrompt(false)" title="Update your details">
+            <span class="avatar"><i class="bi bi-person-fill"></i></span>
+            <span class="name" id="customerBadgeText">Set profile</span>
         </div>
         <div class="cart-btn" id="cartBtn" title="Your cart">
             <i class="bi bi-bag"></i>
@@ -369,53 +348,89 @@ const TAX_RATE = {{ $taxRate }};
 const SERVICE_CHARGE = {{ $serviceCharge }};
 const CSRF = '{{ csrf_token() }}';
 let cart = {};
-let selectedTableId   = {{ $selectedTableId ?? 'null' }};
-let selectedTableNumber = '{{ $selectedTableNumber ?? '' }}';
+let customerProfile = {
+    name: (localStorage.getItem('teashop_customer_name') || '').trim(),
+    phone: (localStorage.getItem('teashop_customer_phone') || '').trim(),
+};
 
-/* Table Picker */
-document.getElementById('tpSearch')?.addEventListener('input', function () {
-    const q = this.value.toLowerCase().trim();
-    document.querySelectorAll('.tp-table-btn').forEach(btn => {
-        btn.style.display = btn.dataset.search.includes(q) ? '' : 'none';
-    });
-});
+/* Table picker flow disabled for web ordering. */
+function syncCustomerBadge() {
+    const badgeText = document.getElementById('customerBadgeText');
+    if (!badgeText) {
+        return;
+    }
 
-document.querySelectorAll('.tp-table-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const id = this.dataset.id, num = this.dataset.num;
-        this.style.background = 'var(--tea-pale)';
-        this.style.borderColor = 'var(--tea-accent)';
-        fetch('{{ route("public.select-table") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
-            body: JSON.stringify({ table_id: id })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success || data.table) {
-                selectedTableId = id; selectedTableNumber = num;
-                const badge = document.getElementById('tableBadge');
-                badge.classList.remove('no-table');
-                document.getElementById('tableBadgeText').textContent = 'Table ' + num;
-                document.getElementById('tablePicker').classList.add('hidden');
-                showToast('Table ' + num + ' selected!', 'bi-check-circle-fill');
-            }
-        })
-        .catch(() => {
-            selectedTableId = id; selectedTableNumber = num;
-            document.getElementById('tableBadgeText').textContent = 'Table ' + num;
-            document.getElementById('tablePicker').classList.add('hidden');
-        });
-    });
-});
+    if (!customerProfile.name) {
+        badgeText.textContent = 'Set profile';
+        return;
+    }
+
+    const shortName = customerProfile.name.length > 16
+        ? customerProfile.name.substring(0, 16) + '...'
+        : customerProfile.name;
+
+    badgeText.textContent = 'Hi, ' + shortName;
+}
+
+function openCustomerPrompt(forceOpen = false) {
+    const modal = document.getElementById('customerPrompt');
+    if (!modal) {
+        return;
+    }
+
+    const nameInput = document.getElementById('customerPromptName');
+    const phoneInput = document.getElementById('customerPromptPhone');
+    const closeButton = document.getElementById('customerPromptClose');
+
+    if (nameInput) {
+        nameInput.value = customerProfile.name || '';
+    }
+
+    if (phoneInput) {
+        phoneInput.value = customerProfile.phone || '';
+    }
+
+    if (closeButton) {
+        closeButton.style.display = forceOpen ? 'none' : 'inline-flex';
+    }
+
+    modal.classList.remove('hidden');
+
+    if (nameInput) {
+        setTimeout(() => nameInput.focus(), 60);
+    }
+}
+
+function closeCustomerPrompt() {
+    if (!customerProfile.name) {
+        return;
+    }
+
+    document.getElementById('customerPrompt')?.classList.add('hidden');
+}
+
+function saveCustomerProfile() {
+    const nameInput = document.getElementById('customerPromptName');
+    const phoneInput = document.getElementById('customerPromptPhone');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+
+    if (!name) {
+        showToast('Please enter your username', 'bi-exclamation-circle');
+        nameInput?.focus();
+        return;
+    }
+
+    customerProfile = { name, phone };
+    localStorage.setItem('teashop_customer_name', name);
+    localStorage.setItem('teashop_customer_phone', phone);
+    syncCustomerBadge();
+    document.getElementById('customerPrompt')?.classList.add('hidden');
+    showToast('Welcome, ' + name + '!', 'bi-check-circle-fill');
+}
 
 /* Cart */
 function addToCart(id, name, price, image) {
-    if (!selectedTableId) {
-        document.getElementById('tablePicker').classList.remove('hidden');
-        showToast('Please select a table first', 'bi-exclamation-circle');
-        return;
-    }
     if (cart[id]) { cart[id].qty += 1; } else { cart[id] = { name, price, image, qty: 1 }; }
     const btn = document.getElementById('add-' + id);
     if (btn) btn.classList.add('in-cart');
@@ -474,26 +489,27 @@ function closeCart() { document.getElementById('cartSidebar').classList.remove('
 document.getElementById('cartBtn').addEventListener('click', () => { document.getElementById('cartSidebar').classList.toggle('open'); document.getElementById('cartOverlay').classList.toggle('show'); });
 
 function goToCheckout() {
-    if (!selectedTableId) { document.getElementById('tablePicker').classList.remove('hidden'); closeCart(); return; }
     if (!Object.keys(cart).length) { showToast('Add items first', 'bi-exclamation-circle'); return; }
-    localStorage.setItem('teashop_cart', JSON.stringify(cart));
-    localStorage.setItem('teashop_table_id', selectedTableId);
-    localStorage.setItem('teashop_table_num', selectedTableNumber);
+    if (!customerProfile.name) {
+        closeCart();
+        openCustomerPrompt(true);
+        showToast('Enter your username to continue', 'bi-exclamation-circle');
+        return;
+    }
 
-    // Sync cart and table into the PHP session before navigating so the
-    // server-side checkout / place-order controllers can read the cart.
-    const csrfToken = '{{ csrf_token() }}';
-    const syncCart  = fetch('{{ route("cart.sync") }}', {
+    localStorage.setItem('teashop_cart', JSON.stringify(cart));
+    localStorage.setItem('teashop_customer_name', customerProfile.name);
+    localStorage.setItem('teashop_customer_phone', customerProfile.phone || '');
+
+    // Sync cart into the PHP session before navigating so server-side
+    // checkout / place-order controllers can read it.
+    const syncCart = fetch('{{ route("cart.sync") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
         body: JSON.stringify({ cart: cart })
     });
-    const syncTable = fetch('{{ route("public.select-table") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify({ table_id: selectedTableId })
-    });
-    Promise.all([syncCart, syncTable])
+
+    syncCart
         .catch(() => {/* navigate regardless */})
         .finally(() => { window.location.href = '{{ route("public.checkout") }}'; });
 }
@@ -541,6 +557,11 @@ function showToast(msg, icon='bi-info-circle') {
 }
 
 renderCart();
+syncCustomerBadge();
+
+if (!customerProfile.name) {
+    openCustomerPrompt(true);
+}
 </script>
 </body>
 </html>
