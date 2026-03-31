@@ -283,9 +283,11 @@
                 $isPaid = $order->payment_status === 'paid';
                 $hasSelectedPaymentMethod = filled($order->payment_method);
                 $isReadyForDetails = in_array($order->status, ['ready', 'served'], true);
+                $stackBallEnabled = isset($stackBallGameEnabled) ? (bool) $stackBallGameEnabled : true;
             @endphp
             <div class="row">
                 <!-- Mini Game Section -->
+                @if($stackBallEnabled)
                 <div class="col-12 order-game-section">
                     @if($hasSelectedPaymentMethod)
                     <h4 class="text-center mb-3">Stack Ball Pro</h4>
@@ -312,6 +314,7 @@
                     </div>
                     @endif
                 </div>
+                @endif
 
                 {{-- Cash payment notice --}}
                 @if(!$isPaid)
@@ -618,6 +621,7 @@
                 let currentStatus = @json($order->status);
                 let currentPaymentStatus = @json($order->payment_status);
                 let currentPaymentMethod = @json($order->payment_method);
+                let currentGameEnabled = @json(isset($stackBallGameEnabled) ? (bool) $stackBallGameEnabled : true);
                 const refreshIndicator = document.getElementById('refreshIndicator');
                 const statusUrl = @json(route('public.order.status', $order->order_number));
 
@@ -642,8 +646,9 @@
                         const statusChanged = data.status && data.status !== currentStatus;
                         const paymentChanged = data.payment_status && data.payment_status !== currentPaymentStatus;
                         const paymentMethodChanged = data.payment_method && data.payment_method !== currentPaymentMethod;
+                        const gameSettingChanged = typeof data.stack_ball_game_enabled === 'boolean' && data.stack_ball_game_enabled !== currentGameEnabled;
 
-                        if (statusChanged || paymentChanged || paymentMethodChanged) {
+                        if (statusChanged || paymentChanged || paymentMethodChanged || gameSettingChanged) {
                             window.location.reload();
                             return;
                         }
@@ -651,6 +656,9 @@
                         currentStatus = data.status || currentStatus;
                         currentPaymentStatus = data.payment_status || currentPaymentStatus;
                         currentPaymentMethod = data.payment_method || currentPaymentMethod;
+                        if (typeof data.stack_ball_game_enabled === 'boolean') {
+                            currentGameEnabled = data.stack_ball_game_enabled;
+                        }
                     })
                     .catch(function () {
                         // Ignore intermittent poll errors and retry on next interval.

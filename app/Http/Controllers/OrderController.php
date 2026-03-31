@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
@@ -203,7 +204,9 @@ class OrderController extends Controller
             ->with(['orderItems.product', 'table'])
             ->firstOrFail();
 
-        return view('public.order.status', compact('order'));
+        $stackBallGameEnabled = $this->isStackBallGameEnabled();
+
+        return view('public.order.status', compact('order', 'stackBallGameEnabled'));
     }
 
     /**
@@ -218,7 +221,8 @@ class OrderController extends Controller
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method,
             'order_number' => $order->order_number,
-            'updated_at' => $order->updated_at->toIso8601String()
+            'updated_at' => $order->updated_at->toIso8601String(),
+            'stack_ball_game_enabled' => $this->isStackBallGameEnabled(),
         ]);
     }
 
@@ -412,5 +416,24 @@ class OrderController extends Controller
         return response($csvData)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="orders-' . now()->format('Y-m-d') . '.csv"');
+    }
+
+    private function isStackBallGameEnabled(): bool
+    {
+        $rawValue = Setting::get('stack_ball_game_enabled', '1');
+
+        if (is_bool($rawValue)) {
+            return $rawValue;
+        }
+
+        if (is_int($rawValue)) {
+            return $rawValue === 1;
+        }
+
+        if (is_string($rawValue)) {
+            return in_array(strtolower($rawValue), ['1', 'true', 'on', 'yes'], true);
+        }
+
+        return (bool) $rawValue;
     }
 }
