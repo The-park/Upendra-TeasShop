@@ -279,10 +279,14 @@
     
     <div class="container my-5">
         @if(isset($order))
+            @php
+                $isPaid = $order->payment_status === 'paid';
+                $isReadyForDetails = in_array($order->status, ['ready', 'served'], true);
+            @endphp
             <div class="row">
                 <!-- Mini Game Section -->
                 <div class="col-12 order-game-section">
-                    @if($order->payment_status === 'paid')
+                    @if($isPaid)
                     <h4 class="text-center mb-3">Stack Ball Pro</h4>
                     <p class="text-center text-muted mb-3">Payment received. Play while we prepare your order.</p>
                     <div class="order-game-wrapper">
@@ -309,7 +313,7 @@
                 </div>
 
                 {{-- Cash payment notice --}}
-                @if($order->payment_status !== 'paid')
+                @if(!$isPaid)
                 <div class="col-12 mb-3">
                     <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:14px;">
                         <i class="fas fa-coins fa-2x" style="color:#f59e0b;flex-shrink:0;"></i>
@@ -462,6 +466,7 @@
                     </div>
 
                     <!-- Order Items -->
+                    @if($isReadyForDetails)
                     <div class="order-card">
                         <h5 class="mb-3">Order Details</h5>
                         @foreach($order->orderItems as $item)
@@ -490,6 +495,15 @@
                             </div>
                         @endif
                     </div>
+                    @else
+                    <div class="order-card">
+                        <h5 class="mb-3">Order Details</h5>
+                        <div class="alert alert-secondary mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Order details will be visible once the admin marks this order as <strong>Ready</strong>.
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 <!-- Order Summary Sidebar -->
@@ -599,7 +613,53 @@
             <i class="fas fa-sync fa-spin me-1"></i> Refreshing...
         </div>
         <script>
-            setTimeout(function() { location.reload(); }, 30000);
+            (function () {
+                let currentStatus = @json($order->status);
+                let currentPaymentStatus = @json($order->payment_status);
+                const refreshIndicator = document.getElementById('refreshIndicator');
+                const statusUrl = @json(route('public.order.status', $order->order_number));
+
+                const pollOrderStatus = function () {
+                    if (refreshIndicator) {
+                        refreshIndicator.style.display = 'block';
+                    }
+
+                    fetch(statusUrl, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Status request failed');
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        const statusChanged = data.status && data.status !== currentStatus;
+                        const paymentChanged = data.payment_status && data.payment_status !== currentPaymentStatus;
+
+                        if (statusChanged || paymentChanged) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        currentStatus = data.status || currentStatus;
+                        currentPaymentStatus = data.payment_status || currentPaymentStatus;
+                    })
+                    .catch(function () {
+                        // Ignore intermittent poll errors and retry on next interval.
+                    })
+                    .finally(function () {
+                        if (refreshIndicator) {
+                            refreshIndicator.style.display = 'none';
+                        }
+                    });
+                };
+
+                setInterval(pollOrderStatus, 8000);
+            })();
         </script>
     @endif
 
