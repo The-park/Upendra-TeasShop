@@ -281,14 +281,15 @@
         @if(isset($order))
             @php
                 $isPaid = $order->payment_status === 'paid';
+                $hasSelectedPaymentMethod = filled($order->payment_method);
                 $isReadyForDetails = in_array($order->status, ['ready', 'served'], true);
             @endphp
             <div class="row">
                 <!-- Mini Game Section -->
                 <div class="col-12 order-game-section">
-                    @if($isPaid)
+                    @if($hasSelectedPaymentMethod)
                     <h4 class="text-center mb-3">Stack Ball Pro</h4>
-                    <p class="text-center text-muted mb-3">Payment received. Play while we prepare your order.</p>
+                    <p class="text-center text-muted mb-3">Payment option selected. Play while we prepare your order.</p>
                     <div class="order-game-wrapper">
                         <div class="order-game-frame">
                             <iframe
@@ -305,8 +306,8 @@
                     <div class="order-game-locked">
                         <i class="fas fa-lock fa-2x" style="color:#f59e0b;flex-shrink:0;"></i>
                         <div>
-                            <h5>Unlock Stack Ball Pro after payment</h5>
-                            <p class="mb-0">Complete your payment to start the game while your order is being prepared.</p>
+                            <h5>Select a payment option to unlock Stack Ball Pro</h5>
+                            <p class="mb-0">Choose cash, card, or digital payment during checkout to start the game.</p>
                         </div>
                     </div>
                     @endif
@@ -616,6 +617,7 @@
             (function () {
                 let currentStatus = @json($order->status);
                 let currentPaymentStatus = @json($order->payment_status);
+                let currentPaymentMethod = @json($order->payment_method);
                 const refreshIndicator = document.getElementById('refreshIndicator');
                 const statusUrl = @json(route('public.order.status', $order->order_number));
 
@@ -639,14 +641,16 @@
                     .then(function (data) {
                         const statusChanged = data.status && data.status !== currentStatus;
                         const paymentChanged = data.payment_status && data.payment_status !== currentPaymentStatus;
+                        const paymentMethodChanged = data.payment_method && data.payment_method !== currentPaymentMethod;
 
-                        if (statusChanged || paymentChanged) {
+                        if (statusChanged || paymentChanged || paymentMethodChanged) {
                             window.location.reload();
                             return;
                         }
 
                         currentStatus = data.status || currentStatus;
                         currentPaymentStatus = data.payment_status || currentPaymentStatus;
+                        currentPaymentMethod = data.payment_method || currentPaymentMethod;
                     })
                     .catch(function () {
                         // Ignore intermittent poll errors and retry on next interval.

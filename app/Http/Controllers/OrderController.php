@@ -197,6 +197,7 @@ class OrderController extends Controller
         return response()->json([
             'status' => $order->status,
             'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method,
             'order_number' => $order->order_number,
             'updated_at' => $order->updated_at->toIso8601String()
         ]);
