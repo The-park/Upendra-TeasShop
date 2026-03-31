@@ -110,6 +110,7 @@
                         <span class="text-muted" style="font-size:13px;">{{ $product->image_path ? 'Replace image' : 'Click to upload' }}</span>
                     </label>
                     <input type="file" class="d-none" id="image" name="image" accept="image/*" onchange="previewImage(this)">
+                    <input type="hidden" name="remove_image" id="remove_image" value="0">
                 </div>
                 <div class="form-text mt-2">JPEG / PNG / GIF � max 2 MB</div>
             </div>
@@ -150,6 +151,11 @@
 <script>
 function previewImage(input) {
     if (input.files && input.files[0]) {
+        const removeImageInput = document.getElementById('remove_image');
+        if (removeImageInput) {
+            removeImageInput.value = '0';
+        }
+
         const reader = new FileReader();
         reader.onload = e => {
             document.getElementById('image-preview').src = e.target.result;
@@ -161,6 +167,10 @@ function previewImage(input) {
 }
 function removeImage() {
     document.getElementById('image').value = '';
+    const removeImageInput = document.getElementById('remove_image');
+    if (removeImageInput) {
+        removeImageInput.value = '1';
+    }
     document.getElementById('image-preview-container').style.display = 'none';
     document.getElementById('image-upload-area').style.display = 'block';
 }

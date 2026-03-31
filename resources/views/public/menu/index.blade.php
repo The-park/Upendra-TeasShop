@@ -54,11 +54,16 @@
         .cart-btn:hover { background: rgba(255,255,255,.25); }
         .cart-btn .cart-count { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: #e53935; border: 2px solid var(--tea-dark); font-size: 10px; font-weight: 700; color: #fff; display: none; align-items: center; justify-content: center; }
 
-        /* Category bar */
-        .category-bar { position: sticky; top: var(--topbar-h); z-index: 800; background: #fff; border-bottom: 1px solid #e0e8e0; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-        .category-scroll { display: flex; gap: 6px; padding: 10px 20px; overflow-x: auto; scrollbar-width: none; }
-        .category-scroll::-webkit-scrollbar { display: none; }
-        .cat-btn { flex-shrink: 0; padding: 6px 18px; border-radius: 20px; border: 1.5px solid #d0dbd0; background: transparent; font-size: 13px; font-weight: 500; color: #555; cursor: pointer; transition: all .18s; white-space: nowrap; font-family: 'Inter', sans-serif; }
+        /* Category menu */
+        .category-bar { position: sticky; top: var(--topbar-h); z-index: 800; background: #fff; border-bottom: 1px solid #e0e8e0; box-shadow: 0 2px 8px rgba(0,0,0,.06); padding: 10px 20px; }
+        .category-menu { position: relative; max-width: 320px; }
+        .category-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1.5px solid #d0dbd0; border-radius: 22px; background: #fff; color: #355135; font-size: 13px; font-weight: 600; padding: 8px 14px; cursor: pointer; transition: border-color .18s, box-shadow .18s, color .18s; }
+        .category-toggle:hover,
+        .category-toggle.active { border-color: var(--tea-accent); color: var(--tea-accent); box-shadow: 0 4px 14px rgba(74,140,63,.15); }
+        .category-toggle-label { display: inline-flex; align-items: center; gap: 8px; }
+        .category-scroll { position: absolute; top: calc(100% + 8px); left: 0; width: min(320px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 6px; padding: 10px; background: #fff; border: 1px solid #dbe6db; border-radius: 14px; box-shadow: 0 14px 34px rgba(0,0,0,.14); max-height: 320px; overflow-y: auto; }
+        .category-scroll[hidden] { display: none !important; }
+        .cat-btn { width: 100%; text-align: left; padding: 8px 14px; border-radius: 12px; border: 1.5px solid #d0dbd0; background: transparent; font-size: 13px; font-weight: 500; color: #555; cursor: pointer; transition: all .18s; font-family: 'Inter', sans-serif; }
         .cat-btn:hover { border-color: var(--tea-accent); color: var(--tea-accent); background: var(--tea-pale); }
         .cat-btn.active { background: var(--tea-accent); border-color: var(--tea-accent); color: #fff; }
 
@@ -153,6 +158,8 @@
         @media (max-width: 640px) {
             .topbar-brand .brand-name { display: none; }
             .menu-content { padding: 16px 12px 100px; }
+            .category-bar { padding: 10px 12px; }
+            .category-menu { max-width: 100%; }
             .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
             .product-img, .product-img-placeholder { height: 130px; }
             .cart-sidebar { width: 100vw; }
@@ -224,14 +231,20 @@
 
 {{-- CATEGORY BAR --}}
 <div class="category-bar">
-    <div class="category-scroll" id="categoryBar">
-        <button class="cat-btn active" data-cat="all">All Items</button>
-        @foreach($categories as $cat)
-        <button class="cat-btn" data-cat="{{ $cat->id }}">
-            {{ $cat->name }}
-            <span style="opacity:.5;font-size:11px;"> ({{ $cat->products_count }})</span>
+    <div class="category-menu">
+        <button type="button" class="category-toggle" id="categoryToggle" aria-expanded="false" aria-controls="categoryBar" aria-label="Toggle categories">
+            <span class="category-toggle-label"><i class="bi bi-list"></i>Categories</span>
+            <i class="bi bi-chevron-down" id="categoryToggleIcon"></i>
         </button>
-        @endforeach
+        <div class="category-scroll" id="categoryBar" hidden>
+            <button class="cat-btn active" data-cat="all">All Items</button>
+            @foreach($categories as $cat)
+            <button class="cat-btn" data-cat="{{ $cat->id }}">
+                {{ $cat->name }}
+                <span style="opacity:.5;font-size:11px;"> ({{ $cat->products_count }})</span>
+            </button>
+            @endforeach
+        </div>
     </div>
 </div>
 
@@ -530,11 +543,63 @@ function doSearch(term) {
 document.getElementById('searchInput')?.addEventListener('input', e => doSearch(e.target.value));
 document.getElementById('searchInputMobile')?.addEventListener('input', e => { doSearch(e.target.value); document.getElementById('searchInput').value = e.target.value; });
 
+/* Category dropdown */
+const categoryToggle = document.getElementById('categoryToggle');
+const categoryBar = document.getElementById('categoryBar');
+const categoryToggleIcon = document.getElementById('categoryToggleIcon');
+
+function closeCategoryMenu() {
+    if (!categoryBar || !categoryToggle || !categoryToggleIcon) {
+        return;
+    }
+
+    categoryBar.hidden = true;
+    categoryToggle.classList.remove('active');
+    categoryToggle.setAttribute('aria-expanded', 'false');
+    categoryToggleIcon.classList.remove('bi-chevron-up');
+    categoryToggleIcon.classList.add('bi-chevron-down');
+}
+
+if (categoryToggle && categoryBar && categoryToggleIcon) {
+    categoryToggle.addEventListener('click', function (event) {
+        event.stopPropagation();
+
+        const willOpen = categoryBar.hidden;
+        if (!willOpen) {
+            closeCategoryMenu();
+            return;
+        }
+
+        categoryBar.hidden = false;
+        categoryToggle.classList.add('active');
+        categoryToggle.setAttribute('aria-expanded', 'true');
+        categoryToggleIcon.classList.remove('bi-chevron-down');
+        categoryToggleIcon.classList.add('bi-chevron-up');
+    });
+
+    document.addEventListener('click', function (event) {
+        if (categoryBar.hidden) {
+            return;
+        }
+
+        if (!categoryBar.contains(event.target) && !categoryToggle.contains(event.target)) {
+            closeCategoryMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeCategoryMenu();
+        }
+    });
+}
+
 /* Category filter */
 document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
         this.classList.add('active');
+        closeCategoryMenu();
         const cat = this.dataset.cat;
         if (cat==='all') {
             document.querySelectorAll('.product-item,[data-category-section]').forEach(el=>el.style.display='');
