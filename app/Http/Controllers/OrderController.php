@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
@@ -41,12 +42,7 @@ class OrderController extends Controller
             }
         }
 
-        // Get all active tables
-        $tables = RestaurantTable::where('is_active', true)
-            ->orderBy('table_number')
-            ->get();
-
-        return view('public.checkout.index', compact('cartItems', 'total', 'tables'));
+        return view('public.checkout.index', compact('cartItems', 'total'));
     }
 
     /**
@@ -76,10 +72,10 @@ class OrderController extends Controller
     public function place(Request $request)
     {
         $request->validate([
-            'table_number'    => 'required|exists:restaurant_tables,table_number',
             'customer_name'   => 'required|string|max:255',
             'customer_phone'  => 'nullable|string|max:20',
             'notes'           => 'nullable|string|max:500',
+            'payment_method'  => 'nullable|in:cash,card,digital',
         ]);
 
         $cart = Session::get('cart', []);
@@ -103,11 +99,44 @@ class OrderController extends Controller
             return redirect()->route('menu')->with('error', 'Your cart is empty.');
         }
 
-        $table = RestaurantTable::where('table_number', $request->table_number)->first();
+        $table = null;
+
+        if ($request->filled('table_number')) {
+            $table = RestaurantTable::where('table_number', $request->table_number)->first();
+        }
+
+        if (!$table && Session::has('selected_table_number')) {
+            $table = RestaurantTable::where('table_number', Session::get('selected_table_number'))->first();
+        }
+
+        if (!$table) {
+            $table = RestaurantTable::where('is_active', true)->orderBy('id')->first();
+        }
+
+        if (!$table) {
+            $table = RestaurantTable::firstOrCreate(
+                ['table_number' => 'ONLINE'],
+                [
+                    'table_name' => 'Online Orders',
+                    'capacity' => 1,
+                    'location' => 'Web',
+                    'status' => 'available',
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        $paymentMethod = strtolower((string) $request->input('payment_method', 'cash'));
+        if (!in_array($paymentMethod, ['cash', 'card', 'digital'], true)) {
+            $paymentMethod = 'cash';
+        }
+
+        // Card/digital payments are treated as paid at checkout completion.
+        $paymentStatus = in_array($paymentMethod, ['card', 'digital'], true) ? 'paid' : 'unpaid';
 
         $order = null;
 
-        DB::transaction(function () use ($request, $cart, $table, &$order) {
+        DB::transaction(function () use ($request, $cart, $table, $paymentMethod, $paymentStatus, &$order) {
             $total = 0;
             $items = [];
 
@@ -133,8 +162,8 @@ class OrderController extends Controller
                 'subtotal'        => $total,
                 'total_amount'    => $total,
                 'status'          => 'pending',
-                'payment_status'  => 'unpaid',
-                'payment_method'  => $request->payment_method ?? 'cash',
+                'payment_status'  => $paymentStatus,
+                'payment_method'  => $paymentMethod,
             ]);
 
             foreach ($items as $item) {
@@ -175,7 +204,9 @@ class OrderController extends Controller
             ->with(['orderItems.product', 'table'])
             ->firstOrFail();
 
-        return view('public.order.status', compact('order'));
+        $stackBallGameEnabled = $this->isStackBallGameEnabled();
+
+        return view('public.order.status', compact('order', 'stackBallGameEnabled'));
     }
 
     /**
@@ -187,8 +218,11 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => $order->status,
+            'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method,
             'order_number' => $order->order_number,
-            'updated_at' => $order->updated_at->toIso8601String()
+            'updated_at' => $order->updated_at->toIso8601String(),
+            'stack_ball_game_enabled' => $this->isStackBallGameEnabled(),
         ]);
     }
 
@@ -240,10 +274,31 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,preparing,ready,served,cancelled'
         ]);
 
-        $order->update([
+        $payload = [
             'status' => $request->status,
             'updated_at' => now()
-        ]);
+        ];
+
+        if ($request->status === 'served') {
+            $payload['served_at'] = now();
+        }
+
+        if ($request->status === 'cancelled') {
+            $payload['cancelled_at'] = now();
+        }
+
+        $order->update($payload);
+
+        // If the order is completed or cancelled, free up the table
+        if (in_array($request->status, ['served', 'cancelled'])) {
+            try {
+                if ($order->table) {
+                    $order->table->update(['status' => 'available']);
+                }
+            } catch (\Exception $e) {
+                // non-fatal: table release failed, but order status still updated
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -296,7 +351,20 @@ class OrderController extends Controller
             ], 400);
         }
 
-        $order->update(['status' => 'cancelled']);
+        $order->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        // release the table if assigned
+        try {
+            if ($order->table) {
+                $order->table->update(['status' => 'available']);
+            }
+        } catch (\Exception $e) {
+            // ignore table update failures
+        }
 
         return response()->json([
             'success' => true,
@@ -348,5 +416,24 @@ class OrderController extends Controller
         return response($csvData)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="orders-' . now()->format('Y-m-d') . '.csv"');
+    }
+
+    private function isStackBallGameEnabled(): bool
+    {
+        $rawValue = Setting::get('stack_ball_game_enabled', '1');
+
+        if (is_bool($rawValue)) {
+            return $rawValue;
+        }
+
+        if (is_int($rawValue)) {
+            return $rawValue === 1;
+        }
+
+        if (is_string($rawValue)) {
+            return in_array(strtolower($rawValue), ['1', 'true', 'on', 'yes'], true);
+        }
+
+        return (bool) $rawValue;
     }
 }

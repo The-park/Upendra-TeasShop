@@ -113,6 +113,7 @@ class ProductController extends Controller
             'cost_price' => 'nullable|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'remove_image' => 'nullable|boolean',
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
         ]);
@@ -121,6 +122,13 @@ class ProductController extends Controller
         $data['slug'] = Str::slug($request->name);
         $data['is_available'] = $request->boolean('is_available');
         $data['is_featured'] = $request->boolean('is_featured');
+        $removeImage = $request->boolean('remove_image');
+
+        if ($removeImage && $product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+            $data['image_path'] = null;
+            $product->image_path = null;
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {

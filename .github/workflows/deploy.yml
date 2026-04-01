@@ -4,7 +4,7 @@ name: Deploy Laravel to TMD Hosting
 on:
   push:
     #branches: [ main ]  
-    branches: [ The-Park-Edits-V2  ] 
+    branches: [ The-park-ball-game ]
 
 jobs:
   deploy:

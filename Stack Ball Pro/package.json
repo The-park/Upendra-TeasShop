@@ -1,0 +1,18 @@
+{
+  "name": "stack-ball-pro",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3001",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "cannon-es": "^0.20.0",
+    "howler": "^2.2.4"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

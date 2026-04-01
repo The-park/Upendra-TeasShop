@@ -101,10 +101,20 @@
                         </div>
                         <div class="col-md-6 d-flex align-items-end">
                             <div class="form-check form-switch mb-2">
+                                <input type="hidden" name="orders_enabled" value="0">
                                 <input class="form-check-input" type="checkbox" name="orders_enabled" id="ordersEnabled" value="1"
-                                       {{ !empty($settings['orders_enabled']) ? 'checked' : '' }}>
+                                       {{ old('orders_enabled', $settings['orders_enabled'] ?? '0') ? 'checked' : '' }}>
                                 <label class="form-check-label fw-semibold" for="ordersEnabled">Accept Orders</label>
                                 <div class="text-muted" style="font-size:12px;">Disable to pause all incoming orders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input type="hidden" name="stack_ball_game_enabled" value="0">
+                                <input class="form-check-input" type="checkbox" name="stack_ball_game_enabled" id="stackBallEnabled" value="1"
+                                       {{ old('stack_ball_game_enabled', $settings['stack_ball_game_enabled'] ?? '1') ? 'checked' : '' }}>
+                                <label class="form-check-label fw-semibold" for="stackBallEnabled">Enable Stack Ball Pro</label>
+                                <div class="text-muted" style="font-size:12px;">Show or hide the game on customer order status page.</div>
                             </div>
                         </div>
                     </div>
